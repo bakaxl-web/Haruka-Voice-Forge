@@ -1,0 +1,82 @@
+# Haruka 公共日语模型接口 v1。
+# 旧 song-011 配置和单曲配置保持不变；新歌曲使用本文件，并可用单曲覆盖词典。
+schema_version: 2
+name: haruka-local-ja-common-v1
+model_id: haruka_local_ja_common_v1
+language_profile: languages/ja_common.yaml
+languages:
+  ja:
+    label: ja
+    phonemes:
+      - SP
+      - AP
+      - <PAD>
+      - a
+      - aː
+      - b
+      - bʲ
+      - c
+      - d
+      - dz
+      - dʑ
+      - e
+      - eː
+      - h
+      - i
+      - iː
+      - i̥
+      - j
+      - k
+      - m
+      - mʲ
+      - n
+      - nː
+      - o
+      - oː
+      - p
+      - pː
+      - s
+      - t
+      - ts
+      - tsː
+      - tɕ
+      - tː
+      - w
+      - z
+      - ç
+      - ŋ
+      - ɕ
+      - ɕː
+      - ɡ
+      - ɨ
+      - ɨː
+      - ɨ̥
+      - ɯ
+      - ɯː
+      - ɲ
+      - ɴ
+      - ɸ
+      - ɾ
+      - ɾʲ
+      - ʑ
+      - ʔ
+    dictionary: dictionaries/ja_common_haruka_v1.dict
+    dictionary_sha256: 1d58e6cca9648beb16410b6d073efbad99fa519f32c1a96f74855679e9806fc0
+    dictionary_scope: shared canonical entries; per-song reviewed.dict has priority
+    special_phonemes: [SP, AP, <PAD>]
+sampling_rate: 44100
+hop_size: 512
+f0_min: 65
+f0_max: 1100
+acoustic:
+  supports_ph_dur: true
+  requires_f0: true
+variance:
+  predict_duration: true
+  predict_pitch: true
+  predict_energy: false
+  predict_breathiness: false
+  predict_voicing: false
+vocoder: NsfHifiGAN
+vocoder_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/acoustic.yaml
+variance_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/variance.yaml

@@ -22,13 +22,14 @@ class RepositoryPolicyTests(unittest.TestCase):
     def test_rejects_model_audio_secret_and_oversize_files(self):
         (self.root / "model.pth").write_bytes(b"model")
         (self.root / "sample.wav").write_bytes(b"audio")
+        (self.root / "score.mid").write_bytes(b"midi")
         (self.root / ".env").write_text("TOKEN=secret\n", encoding="utf-8")
         (self.root / "large.bin").write_bytes(b"x" * (10 * 1024 * 1024 + 1))
 
         violations = scan_paths(self.root)
         paths = {item["path"] for item in violations}
         reasons = {item["reason"] for item in violations}
-        self.assertEqual(paths, {"model.pth", "sample.wav", ".env", "large.bin"})
+        self.assertEqual(paths, {"model.pth", "sample.wav", "score.mid", ".env", "large.bin"})
         self.assertIn("forbidden-extension", reasons)
         self.assertIn("secret-file", reasons)
         self.assertIn("oversize", reasons)
@@ -38,6 +39,14 @@ class RepositoryPolicyTests(unittest.TestCase):
         (self.root / "model-registry" / "archive" / "model.pth").write_bytes(b"model")
         (self.root / ".git" / "objects").mkdir(parents=True)
         (self.root / ".git" / "objects" / "object.pth").write_bytes(b"model")
+
+        self.assertEqual(scan_paths(self.root), [])
+
+    def test_ignores_coverprep_environment_and_generated_outputs(self):
+        (self.root / "coverprep_env" / "Lib").mkdir(parents=True)
+        (self.root / "coverprep_env" / "Lib" / "audio.wav").write_bytes(b"audio")
+        (self.root / "outputs" / "job").mkdir(parents=True)
+        (self.root / "outputs" / "job" / "package.zip").write_bytes(b"archive")
 
         self.assertEqual(scan_paths(self.root), [])
 

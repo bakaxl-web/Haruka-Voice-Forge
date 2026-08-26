@@ -1,0 +1,6 @@
+# 翻唱准备流程的 Python 依赖；外部 MFA、MSST、GPT-SoVITS 和 GAME 工具仍由 tools.local.yaml 配置。
+numpy>=1.26,<3
+PyYAML>=6,<7
+soundfile>=0.12,<1
+mido>=1.3,<2
+librosa>=0.10,<1

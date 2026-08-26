@@ -1,0 +1,55 @@
+# 通用日语语言层：只描述 G2P、MFA 音素和停顿规则，不绑定具体模型。
+schema_version: 2
+id: japanese_common_v1
+language: ja
+g2p:
+  backend_priority: [open_jtalk, gpt_sovits_japanese]
+  long_vowel: preserve_and_review
+  sokuon: ʔ
+  moraic_n: contextual
+  latin_text: japanese_reading_candidate
+  unknown_text: blocking_review
+mfa:
+  language: Japanese
+  acoustic_model_name: japanese_mfa
+  dictionary_name: japanese_mfa
+  beam: 100
+  phone_tier: phones
+  forbidden_phones: [spn]
+  silence_labels: [sil, sp, pau]
+  # japanese_mfa 只提供 sil；Haruka 的 SP 只在 MFA 侧映射，最终 DS 仍保留 SP。
+  dictionary_phone_map:
+    SP: sil
+  aliases:
+    sil: SP
+    sp: SP
+    pau: SP
+    a: a
+    aː: aː
+    e: e
+    eː: eː
+    i: i
+    iː: iː
+    o: o
+    oː: oː
+    u: ɨ
+    ɯ: ɯ
+    ɴ: ɴ
+    ŋ: ŋ
+    ɕ: ɕ
+    ɕː: ɕː
+    tɕ: tɕ
+    ʔ: ʔ
+special_phonemes: [SP, AP]
+sp_ap_rules:
+  SP:
+    requires: [low_energy, no_stable_f0, no_note_conflict]
+  AP:
+    requires: [no_stable_f0, breath_or_aperiodic_evidence, no_note_conflict]
+  voiced_gap: blocking_review
+phoneme_aliases:
+  cl: ʔ
+  pau: SP
+  sil: SP
+  sp: SP
+forbidden_phonemes: [spn]

@@ -8,6 +8,7 @@ __pycache__/
 .venv/
 venv/
 env/
+coverprep_env/
 
 # Model weights, indexes, and checkpoints
 *.pth
@@ -23,6 +24,8 @@ env/
 *.mp3
 *.ogg
 *.m4a
+*.mid
+*.midi
 *.png
 *.jpg
 *.jpeg
@@ -38,8 +41,10 @@ artifacts/
 model-registry/
 tmp/
 temp/
+*.log
 
 # Local configuration and credentials
+config/tools.local.yaml
 .env
 .env.*
 *.key

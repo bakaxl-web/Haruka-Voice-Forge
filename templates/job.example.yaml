@@ -1,0 +1,29 @@
+schema_version: 2
+job_id: example
+mode: guide
+language: ja
+source: D:/path/to/source.wav
+guide_vocal: D:/path/to/guide.wav
+score: D:/path/to/score.ds
+lyrics: D:/path/to/lyrics.tsv
+model_profile: D:/path/to/model_profile.yaml
+language_profile: D:/path/to/ja_common.yaml
+tool_config: D:/语音模型/Haruka-SVS-Tools/cover-prep/config/tools.local.yaml
+lexicon_overrides: D:/path/to/song.dict
+separator:
+  adapter: configured-only
+  command: ''
+aligner:
+  adapter: mfa
+  command: ''
+g2p:
+  adapter: configured-only
+  command: ''
+game:
+  adapter: GAME
+  command: ''
+  model: ''
+pitch:
+  adapter: parselmouth
+  timestep: 0.01
+include_stems: false

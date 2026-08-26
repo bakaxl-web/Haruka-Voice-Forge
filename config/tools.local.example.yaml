@@ -1,0 +1,24 @@
+# 本机工具配置模板。复制为 tools.local.yaml 后按实际路径修改。
+# 该文件和实际 tools.local.yaml 都不会进入上传包。
+schema_version: 2
+root: D:/语音模型/Haruka-SVS-Tools
+cache_dir: D:/语音模型/Haruka-SVS-Tools/cache
+temp_dir: D:/语音模型/Haruka-SVS-Tools/tmp
+mfa:
+  executable: D:/语音模型/Haruka-SVS-Tools/miniforge3/envs/mfa/Scripts/mfa.exe
+  conda_prefix: D:/语音模型/Haruka-SVS-Tools/miniforge3
+  environment: mfa
+  root_dir: D:/语音模型/Haruka-SVS-Tools/mfa
+  temp_dir: D:/语音模型/Haruka-SVS-Tools/mfa/tmp
+  # MFA 官方模型库在 MFA_ROOT_DIR/pretrained_models 下按类型分目录保存。
+  acoustic_model: D:/语音模型/Haruka-SVS-Tools/mfa/pretrained_models/acoustic/japanese_mfa.zip
+  dictionary: D:/语音模型/Haruka-SVS-Tools/mfa/pretrained_models/dictionary/japanese_mfa.dict
+  g2p_model: D:/语音模型/Haruka-SVS-Tools/mfa/pretrained_models/g2p/japanese_mfa.zip
+game:
+  python: D:/语音模型/Haruka-SVS-Tools/GAME/.venv/Scripts/python.exe
+  root: D:/语音模型/Haruka-SVS-Tools/GAME
+g2p:
+  python: D:/语音模型/GPT-SoVITS-v2pro-20250604/runtime/python.exe
+  cwd: D:/语音模型/GPT-SoVITS-v2pro-20250604
+diffsinger:
+  root: D:/语音模型/Haruka-SVS-Tools/DiffSinger

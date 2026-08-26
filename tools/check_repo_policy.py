@@ -18,8 +18,26 @@ FORBIDDEN_SUFFIXES = {
     ".mp3",
     ".ogg",
     ".m4a",
+    ".mid",
+    ".midi",
 }
-IGNORED_DIRECTORIES = {".git", ".venv", "venv", "model-registry", "cache", "runs", "logs"}
+IGNORED_DIRECTORIES = {
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "coverprep_env",
+    "model-registry",
+    "cache",
+    "runs",
+    "logs",
+    "outputs",
+    "artifacts",
+    "dataset",
+    "datasets",
+    "tmp",
+    "temp",
+}
 
 
 def scan_paths(root: Path, max_bytes: int = MAX_GIT_FILE_BYTES) -> list[dict[str, object]]:

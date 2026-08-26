@@ -1,0 +1,18 @@
+schema_version: 2
+name: example-diffsinger
+language_profile: languages/ja_common.yaml
+languages:
+  ja:
+    label: ja
+    phonemes: [SP, AP]
+    dictionary: D:/语音模型/Haruka-SVS-Tools/dictionary/ja.dict
+sampling_rate: 44100
+hop_size: 512
+f0_min: 65
+f0_max: 1100
+acoustic:
+  supports_ph_dur: true
+variance:
+  predict_duration: false
+  predict_pitch: false
+vocoder: configured-outside-this-tool

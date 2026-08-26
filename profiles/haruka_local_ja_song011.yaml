@@ -1,0 +1,81 @@
+# 本配置只描述现有 Haruka song-011 训练模型的接口，不代表通用日语模型。
+schema_version: 1
+name: haruka-local-ja-song011
+scope: song-011-trained-model-only
+language: ja
+languages:
+  ja:
+    label: ja
+    phonemes:
+      - SP
+      - AP
+      - <PAD>
+      - a
+      - aː
+      - b
+      - bʲ
+      - c
+      - d
+      - dz
+      - dʑ
+      - e
+      - eː
+      - h
+      - i
+      - iː
+      - i̥
+      - j
+      - k
+      - m
+      - mʲ
+      - n
+      - nː
+      - o
+      - oː
+      - p
+      - pː
+      - s
+      - t
+      - ts
+      - tsː
+      - tɕ
+      - tː
+      - w
+      - z
+      - ç
+      - ŋ
+      - ɕ
+      - ɕː
+      - ɡ
+      - ɨ
+      - ɨː
+      - ɨ̥
+      - ɯ
+      - ɯː
+      - ɲ
+      - ɴ
+      - ɸ
+      - ɾ
+      - ɾʲ
+      - ʑ
+      - ʔ
+    dictionary: D:/语音模型/Haruka-SVS-Pilot/song-011/dataset/diffsinger_final_v3/dictionary_song011_final.dict
+    dictionary_sha256: 6f8256780647f9be1186461761c17a6f8ae6f3304d673f3f4e4a2a90536c0974
+    dictionary_scope: 158 song-011 verified entries; new words require review
+    special_phonemes: [SP, AP, <PAD>]
+sampling_rate: 44100
+hop_size: 512
+f0_min: 65
+f0_max: 1100
+acoustic:
+  supports_ph_dur: true
+  requires_f0: true
+variance:
+  predict_duration: true
+  predict_pitch: true
+  predict_energy: false
+  predict_breathiness: false
+  predict_voicing: false
+vocoder: NsfHifiGAN
+vocoder_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/acoustic.yaml
+variance_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/variance.yaml
