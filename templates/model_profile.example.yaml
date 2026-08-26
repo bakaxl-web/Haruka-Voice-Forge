@@ -5,7 +5,7 @@ languages:
   ja:
     label: ja
     phonemes: [SP, AP]
-    dictionary: D:/语音模型/Haruka-SVS-Tools/dictionary/ja.dict
+    dictionary: ./inputs/dictionary.dict
 sampling_rate: 44100
 hop_size: 512
 f0_min: 65
