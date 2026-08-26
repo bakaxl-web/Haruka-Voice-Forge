@@ -5,6 +5,7 @@ from pathlib import Path
 
 from tools.model_registry import (
     RegistryError,
+    build_parser,
     inventory_paths,
     stage_release,
     verify_manifest,
@@ -94,6 +95,27 @@ class ModelRegistryTests(unittest.TestCase):
 
         with self.assertRaises(RegistryError):
             verify_manifest(manifest_path, [self.source])
+
+    def test_cli_accepts_hyphenated_metadata_options(self):
+        args = build_parser().parse_args(
+            [
+                "inventory",
+                "--input",
+                str(self.weight),
+                "--output",
+                str(self.root / "manifest.json"),
+                "--model-version",
+                "model-test",
+                "--run-id",
+                "run-test",
+                "--model-family",
+                "rvc-singing",
+            ]
+        )
+
+        self.assertEqual(args.model_version, "model-test")
+        self.assertEqual(args.run_id, "run-test")
+        self.assertEqual(args.model_family, "rvc-singing")
 
 
 if __name__ == "__main__":

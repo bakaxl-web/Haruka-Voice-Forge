@@ -294,12 +294,13 @@ def build_parser() -> argparse.ArgumentParser:
     inventory.add_argument("--output", required=True, type=Path)
     inventory.add_argument("--metadata-json", type=Path)
     for name in DEFAULT_METADATA:
+        option = f"--{name.replace('_', '-')}"
         if name in {"epoch", "step", "seed"}:
-            inventory.add_argument(f"--{name}", type=int)
+            inventory.add_argument(option, dest=name, type=int)
         elif name == "status":
-            inventory.add_argument("--status", choices=sorted(MODEL_STATUSES))
+            inventory.add_argument(option, dest=name, choices=sorted(MODEL_STATUSES))
         else:
-            inventory.add_argument(f"--{name}")
+            inventory.add_argument(option, dest=name)
 
     verify = subparsers.add_parser("verify", help="验证模型清单")
     verify.add_argument("--manifest", required=True, type=Path)
