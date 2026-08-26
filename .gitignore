@@ -1,0 +1,60 @@
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Model weights, indexes, and checkpoints
+*.pth
+*.ckpt
+*.index
+*.onnx
+*.safetensors
+*.bin
+
+# Audio and generated media
+*.wav
+*.flac
+*.mp3
+*.ogg
+*.m4a
+*.png
+*.jpg
+*.jpeg
+
+# Datasets, runs, logs, caches, and generated outputs
+dataset/
+datasets/
+runs/
+logs/
+cache/
+outputs/
+artifacts/
+model-registry/
+tmp/
+temp/
+
+# Local configuration and credentials
+.env
+.env.*
+*.key
+*.pem
+*.token
+secrets/
+
+# Windows and editor files
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+
+# Release archives are staged outside Git
+*.zip
+*.7z
+*.tar
+*.tar.gz
