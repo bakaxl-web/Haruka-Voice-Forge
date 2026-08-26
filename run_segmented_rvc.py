@@ -15,67 +15,48 @@ from pathlib import Path
 # 必须在导入 RVC 模块前关闭 CUDA Graph，避免 8 GiB 显存环境下重复形状缓存。
 os.environ.setdefault("RVC_CUDA_GRAPH", "0")
 
-APP_ROOT = Path(r"D:\语音模型\Haruka-RVC-Pilot\app").resolve()
-PROJECT_ROOT = APP_ROOT.parent
-os.chdir(APP_ROOT)
-sys.path.insert(0, str(APP_ROOT))
-
 import librosa
 import numpy as np
 import soundfile as sf
 
-from infer.cli import configure_inference_seed, create_config
-from infer.vc.modules import VC
+DEFAULT_RVC_APP_ROOT = Path(r"D:\语音模型\Haruka-RVC-Pilot\app")
+APP_ROOT: Path | None = None
+
+
+def resolve_rvc_app_root(value: Path | str | None = None) -> Path:
+    """解析外部 RVC app 根目录，保留本机默认值并允许环境变量覆盖。"""
+    configured = value or os.environ.get("HARUKA_RVC_APP_ROOT") or DEFAULT_RVC_APP_ROOT
+    root = Path(configured).expanduser().resolve()
+    if not root.is_dir():
+        raise FileNotFoundError(f"RVC app 根目录不存在：{root}")
+    return root
+
+
+def _same_path(value: str, expected: Path) -> bool:
+    """判断 sys.path 项是否指向当前仓库，避免遮蔽外部 RVC 的 tools 包。"""
+    try:
+        return Path(value or ".").resolve() == expected
+    except (OSError, RuntimeError):
+        return False
+
+
+def _load_rvc_runtime(app_root: Path):
+    """在外部 RVC 根目录下延迟加载运行时，避免测试依赖 GPU 和 Torch。"""
+    global APP_ROOT
+    APP_ROOT = app_root
+    script_root = Path(__file__).resolve().parent
+    sys.path[:] = [entry for entry in sys.path if not _same_path(entry, script_root)]
+    sys.path.insert(0, str(app_root))
+    os.chdir(app_root)
+    from infer.cli import configure_inference_seed, create_config
+    from infer.vc.modules import VC
+
+    return configure_inference_seed, create_config, VC
 
 
 SAMPLE_RATE_40K = 40000
 CORE_FRAMES = 7 * SAMPLE_RATE_40K
 CONTEXT_FRAMES = int(0.5 * SAMPLE_RATE_40K)
-
-# 这些边界来自当前干声的实际无声间隔；情绪段不是按 7 秒微块切换。
-EMOTION_SEGMENTS = [
-    {
-        "name": "opening_intimate",
-        "start": 40.5,
-        "end": 60.0,
-        "index_rate": 0.50,
-        "rms_mix_rate": 0.24,
-        "protect": 0.20,
-    },
-    {
-        "name": "first_release",
-        "start": 60.5,
-        "end": 95.5,
-        "index_rate": 0.62,
-        "rms_mix_rate": 0.33,
-        "protect": 0.27,
-    },
-    {
-        "name": "second_verse",
-        "start": 104.0,
-        "end": 124.5,
-        "index_rate": 0.55,
-        "rms_mix_rate": 0.28,
-        "protect": 0.23,
-    },
-    {
-        "name": "second_release",
-        "start": 124.5,
-        "end": 159.0,
-        "index_rate": 0.62,
-        "rms_mix_rate": 0.33,
-        "protect": 0.27,
-    },
-    {
-        "name": "final_peak",
-        "start": 178.0,
-        "end": 202.0,
-        "index_rate": 0.66,
-        "rms_mix_rate": 0.35,
-        "protect": 0.28,
-    },
-]
-
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -83,6 +64,13 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def configure_model_root(model_path: Path | str) -> None:
+    """让 RVC 的文件名加载接口指向模型实际所在目录。"""
+    # VC.get_vc() 接收的是文件名，并通过 weight_root 拼出完整路径；
+    # 这里显式切换到模型的父目录，兼容嵌套的权重目录。
+    os.environ["weight_root"] = str(Path(model_path).resolve().parent)
 
 
 def read_mono_40k(path: Path) -> tuple[np.ndarray, int, int]:
@@ -129,6 +117,7 @@ def convert_chunk(
     index_rate: float,
     rms_mix_rate: float,
     protect: float,
+    pitch: int,
 ) -> tuple[np.ndarray, dict]:
     segment_start = max(0, core_start - CONTEXT_FRAMES)
     segment_end = min(len(source_40k), core_end + CONTEXT_FRAMES)
@@ -139,7 +128,7 @@ def convert_chunk(
     status, result = vc.vc_single(
         0,
         str(work_input),
-        0,
+        pitch,
         "rmvpe",
         index_path,
         index_rate,
@@ -184,6 +173,7 @@ def convert_chunk(
         "index_rate": index_rate,
         "rms_mix_rate": rms_mix_rate,
         "protect": protect,
+        "pitch": pitch,
         "elapsed_seconds": round(time.time() - started, 3),
         "status": status,
     }
@@ -221,14 +211,32 @@ def main() -> int:
     parser.add_argument("--model", required=True)
     parser.add_argument("--index", required=True)
     parser.add_argument("--output-root", required=True)
+    parser.add_argument(
+        "--segments-json",
+        type=Path,
+        required=True,
+        help="情绪段配置 JSON 文件",
+    )
+    parser.add_argument(
+        "--song-title",
+        default=None,
+        help="输出文件使用的歌曲标题",
+    )
     parser.add_argument("--seed", type=int, default=20260816)
     args = parser.parse_args()
+    app_root = resolve_rvc_app_root()
 
     source_path = Path(args.source).resolve()
     instrumental_path = Path(args.instrumental).resolve()
     model_path = Path(args.model).resolve()
     index_path = Path(args.index).resolve()
     output_root = Path(args.output_root).resolve()
+    segments_path = args.segments_json.resolve()
+    if not segments_path.is_file():
+        raise FileNotFoundError(segments_path)
+    emotion_segments = json.loads(segments_path.read_text(encoding="utf-8"))
+    if not isinstance(emotion_segments, list) or not emotion_segments:
+        raise ValueError("情绪段配置必须是非空 JSON 数组")
 
     for required in (source_path, instrumental_path, model_path, index_path):
         if not required.is_file():
@@ -259,14 +267,16 @@ def main() -> int:
 
     # 当前项目的 FAISS 通过 app 工作目录读取 ASCII 相对路径，避免中文绝对路径失败。
     index_relative = "assets/indices/" + index_path.name
-    if not (APP_ROOT / index_relative).is_file():
-        raise FileNotFoundError(APP_ROOT / index_relative)
+    if not (app_root / index_relative).is_file():
+        raise FileNotFoundError(app_root / index_relative)
 
+    configure_inference_seed, create_config, VC = _load_rvc_runtime(app_root)
     configure_inference_seed(args.seed)
     config = create_config()
     print(f"设备：{config.device} | 精度：{config.dtype}", flush=True)
     print(f"模型：{model_path.name}", flush=True)
     print(f"索引：{index_relative}", flush=True)
+    configure_model_root(model_path)
     vc = VC(config)
     vc.get_vc(model_path.name)
 
@@ -276,15 +286,17 @@ def main() -> int:
     converted_40k = np.zeros(len(source_40k), dtype=np.float32)
     all_chunks: list[dict] = []
 
-    for region in EMOTION_SEGMENTS:
+    for region in emotion_segments:
         region_start = max(0, int(round(region["start"] * SAMPLE_RATE_40K)))
         region_end = min(len(source_40k), int(round(region["end"] * SAMPLE_RATE_40K)))
         region_dir_input = input_root / region["name"]
         region_dir_output = converted_root / region["name"]
+        # 旧 schedule 没有 pitch 时保持原调；新 schedule 可只对高音段下移半音。
+        region_pitch = int(region.get("pitch", 0))
         print(
             f"[{region['name']}] {region['start']:.1f}-{region['end']:.1f}s | "
             f"i={region['index_rate']:.2f}, r={region['rms_mix_rate']:.2f}, "
-            f"p={region['protect']:.2f}",
+            f"p={region['protect']:.2f}, f0={region_pitch:+d}",
             flush=True,
         )
         cursor = region_start
@@ -305,6 +317,7 @@ def main() -> int:
                 float(region["index_rate"]),
                 float(region["rms_mix_rate"]),
                 float(region["protect"]),
+                region_pitch,
             )
             converted_40k[cursor:chunk_end] = core
             record.update(
@@ -343,11 +356,12 @@ def main() -> int:
     raw_peak = float(np.max(np.abs(mix))) if mix.size else 0.0
     gain = 0.98 / raw_peak if raw_peak > 0.98 else 1.0
     mix *= gain
-    cover_path = output_root / f"じん_IA_オツキミリサイタル_{model_tag}_分段情绪参数翻唱.wav"
+    song_title = args.song_title or source_path.stem
+    cover_path = output_root / f"{song_title}_{model_tag}_分段情绪参数翻唱.wav"
     write_pcm16(cover_path, mix, source_rate)
 
     boundary_records = []
-    for region in EMOTION_SEGMENTS[:-1]:
+    for region in emotion_segments[:-1]:
         boundary = int(round(region["end"] * SAMPLE_RATE_40K))
         left = converted_40k[max(0, boundary - 2000) : boundary]
         right = converted_40k[boundary : min(len(converted_40k), boundary + 2000)]
@@ -389,7 +403,7 @@ def main() -> int:
             "samplerate": instrumental_rate,
             "frames": int(instrumental.shape[0]),
         },
-        "emotion_segments": EMOTION_SEGMENTS,
+        "emotion_segments": emotion_segments,
         "chunks": all_chunks,
         "outputs": {
             "vocal_40k_mono": str(vocal_40k_path),

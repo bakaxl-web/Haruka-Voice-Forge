@@ -61,6 +61,24 @@ python -m coverprep --help
 
 CI 会安装 Python 依赖和 Ubuntu 的 `ffmpeg`，但不会安装或下载 MFA、MSST、GAME、GPT-SoVITS、Open JTalk 及其模型。它们属于本机工具链，需在 `config/tools.local.yaml` 中配置，并先运行 `python -m coverprep doctor --tool-config config/tools.local.yaml` 做预检。
 
+## RVC 路线
+
+2026-08-26 的 RVC 工作流补充位于仓库根目录：
+
+- `run_rvc_aligned.py`：按核心区和上下文执行对齐分块转换。
+- `run_segmented_rvc.py`：按外部情绪段 JSON 执行分段转换并重建时间轴。
+- `analyze_lyrics_emotion.py`：从字幕和人声提取可审计的情绪/声学参数。
+- `smooth_emotion_boundaries.py`：平滑连续情绪段边界。
+- `mix_vocal_plus_gain.py`：提升人声比例并生成防削波混音。
+
+运行前设置外部 RVC app 根目录；模型、索引、音频和运行产物只保存在本机：
+
+```powershell
+$env:HARUKA_RVC_APP_ROOT = "D:/path/to/Haruka-RVC-Pilot/app"
+python run_rvc_aligned.py --source <source.wav> --model <model.pth> --index <model.index> --output <converted.wav>
+python run_segmented_rvc.py --source <source.wav> --instrumental <instrumental.wav> --model <model.pth> --index <model.index> --segments-json <segments.json> --output-root <output-dir>
+```
+
 ## 权重原则
 
 每个模型版本必须有 JSON 清单和 SHA-256。服务器权重必须先下载到 D 盘并完成本地哈希校验，之后才能归档或发布。不要使用会被覆盖的 `latest` 文件名。
