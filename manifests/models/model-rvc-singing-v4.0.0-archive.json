@@ -1,0 +1,53 @@
+{
+  "schema_version": "haruka-model-manifest-v1",
+  "model_version": "model-rvc-singing-v4.0.0-archive",
+  "run_id": "rvc-singing-v4-cloud-seg12800",
+  "model_family": "rvc-singing",
+  "code_commit": "legacy-imported",
+  "dataset_version": "haruka-singing-v4",
+  "config_sha256": "legacy-imported",
+  "epoch": null,
+  "step": null,
+  "seed": null,
+  "torch": "unknown",
+  "cuda": "unknown",
+  "gpu": "unknown",
+  "status": "archived",
+  "files": [
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v4_cloud_seg12800_e100_s11100.pth",
+      "source_relpath": "haruka_singing_v4_cloud_seg12800_e100_s11100.pth",
+      "bytes": 55241368,
+      "sha256": "42890ed4d6cccf2ba22e921f2f5747cc33b8fe4ae19c222916316bbeba05280e"
+    },
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v4_cloud_seg12800_e10_s1110.pth",
+      "source_relpath": "haruka_singing_v4_cloud_seg12800_e10_s1110.pth",
+      "bytes": 55240442,
+      "sha256": "a055e8645c2393acf0e793acb311105ecfcbf51e893819d1527ffe4abd6ff0d7"
+    },
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v4_cloud_seg12800_e20_s2220.pth",
+      "source_relpath": "haruka_singing_v4_cloud_seg12800_e20_s2220.pth",
+      "bytes": 55240442,
+      "sha256": "08e34d1c44d4a106ac0227dc41bd6e5c744f28cc09f9266803fefd47c875b3d0"
+    },
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v4_cloud_seg12800_e40_s4440.pth",
+      "source_relpath": "haruka_singing_v4_cloud_seg12800_e40_s4440.pth",
+      "bytes": 55240442,
+      "sha256": "35e9cc3264676197c65d9eaf15f594b119941e2d3149c01cbdfc99f88f3eff57"
+    },
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v4_cloud_seg12800_e60_s6660.pth",
+      "source_relpath": "haruka_singing_v4_cloud_seg12800_e60_s6660.pth",
+      "bytes": 55240442,
+      "sha256": "f8f9e81d766044397e62ca14b3cf57370b58af1cbee2c228dcf1e8a3a0e4713c"
+    }
+  ]
+}

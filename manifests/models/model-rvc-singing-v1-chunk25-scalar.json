@@ -1,0 +1,46 @@
+{
+  "schema_version": "haruka-model-manifest-v1",
+  "model_version": "model-rvc-singing-v1-chunk25-scalar",
+  "run_id": "rvc-singing-v1-chunk25-scalar",
+  "model_family": "rvc-singing",
+  "code_commit": "legacy-imported",
+  "dataset_version": "haruka-singing-v1",
+  "config_sha256": "legacy-imported",
+  "epoch": null,
+  "step": null,
+  "seed": null,
+  "torch": "unknown",
+  "cuda": "unknown",
+  "gpu": "unknown",
+  "status": "archived",
+  "files": [
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v1_chunk25_scalar.pth",
+      "source_relpath": "haruka_singing_v1_chunk25_scalar.pth",
+      "bytes": 55235812,
+      "sha256": "1b31b5be46346ab49d8d6356b16704da1a795259f21f52ff9944737cd949d61d"
+    },
+    {
+      "role": "index",
+      "name": "haruka_singing_v1_chunk25_scalar_added_IVF1425_Flat_nprobe_1_haruka_singing_v1_chunk25_scalar_v2.index",
+      "source_relpath": "haruka_singing_v1_chunk25_scalar_added_IVF1425_Flat_nprobe_1_haruka_singing_v1_chunk25_scalar_v2.index",
+      "bytes": 175581699,
+      "sha256": "94cf32a80b473a230878ff2a386c072f734c7e08a93f2556947dec73a61e9f0e"
+    },
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v1_chunk25_scalar_e10_s4800.pth",
+      "source_relpath": "haruka_singing_v1_chunk25_scalar_e10_s4800.pth",
+      "bytes": 55240442,
+      "sha256": "3d37ff80c09207212ab4231e84b123e810c7572be80687d7baafbe2bba98abd3"
+    },
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v1_chunk25_scalar_e20_s9600.pth",
+      "source_relpath": "haruka_singing_v1_chunk25_scalar_e20_s9600.pth",
+      "bytes": 55240442,
+      "sha256": "46eff44c9dbecf23841203590c4ddfa4f68313c92664ac6fde326b347b82ca91"
+    }
+  ]
+}

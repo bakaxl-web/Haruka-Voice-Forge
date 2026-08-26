@@ -1,0 +1,25 @@
+{
+  "schema_version": "haruka-model-manifest-v1",
+  "model_version": "model-gptsovits-warmstart-s1-only-lr1e-5-e1",
+  "run_id": "gptsovits-warmstart-s1-only-lr1e-5-e1",
+  "model_family": "gpt-sovits",
+  "code_commit": "legacy-imported",
+  "dataset_version": "haruka-voice-system-legacy",
+  "config_sha256": "legacy-imported",
+  "epoch": null,
+  "step": null,
+  "seed": null,
+  "torch": "unknown",
+  "cuda": "unknown",
+  "gpu": "unknown",
+  "status": "archived",
+  "files": [
+    {
+      "role": "inference_weight",
+      "name": "haruka_warmstart_s1_s1-e1.ckpt",
+      "source_relpath": "haruka_warmstart_s1_s1-e1.ckpt",
+      "bytes": 155312822,
+      "sha256": "8767ab2de4be6b6ddb036e20005f5d430a97e87ee4e8a3f2da20108f4cfee140"
+    }
+  ]
+}
