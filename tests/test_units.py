@@ -349,7 +349,10 @@ class UnitContractTests(unittest.TestCase):
 
         self.assertEqual(result, [["k", "i"]])
         environment = mocked_run.call_args.kwargs["env"]
-        self.assertEqual(environment["OPEN_JTALK_DICT_DIR"], r"D:\Haruka-SVS-Tools\open_jtalk_dict")
+        self.assertEqual(
+            environment["OPEN_JTALK_DICT_DIR"].replace("\\", "/"),
+            "D:/Haruka-SVS-Tools/open_jtalk_dict",
+        )
 
     def test_pyopenjtalk_kana_batch_returns_one_reading_per_input(self):
         import json
@@ -373,7 +376,10 @@ class UnitContractTests(unittest.TestCase):
         self.assertEqual(result, ["キミ", "プロミス ユー"])
         call = mocked_run.call_args
         self.assertFalse(call.kwargs["shell"])
-        self.assertEqual(call.kwargs["env"]["OPEN_JTALK_DICT_DIR"], r"D:\Haruka-SVS-Tools\open_jtalk_dict")
+        self.assertEqual(
+            call.kwargs["env"]["OPEN_JTALK_DICT_DIR"].replace("\\", "/"),
+            "D:/Haruka-SVS-Tools/open_jtalk_dict",
+        )
 
     def test_mfa_g2p_parser_accepts_unique_exact_word_only(self):
         from coverprep.g2p import parse_mfa_g2p_output
