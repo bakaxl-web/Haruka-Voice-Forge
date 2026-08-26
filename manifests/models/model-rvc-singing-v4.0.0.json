@@ -17,6 +17,7 @@
     {
       "role": "index",
       "name": "haruka_singing_v4_cloud_seg12800_added_IVF621_Flat_nprobe_1_haruka_singing_v4_cloud_seg12800_v2.index",
+      "release_name": "haruka-rvc-singing-v4.0.0-ivf621.index",
       "source_relpath": "haruka_singing_v4_cloud_seg12800_added_IVF621_Flat_nprobe_1_haruka_singing_v4_cloud_seg12800_v2.index",
       "bytes": 76587419,
       "sha256": "7f077c6586ec46c921df4a1a533fbbb95036c16eca73ab809188c50a3ad630e7"
@@ -24,6 +25,7 @@
     {
       "role": "inference_weight",
       "name": "haruka_singing_v4_cloud_seg12800_e80_s8880.pth",
+      "release_name": "haruka-rvc-singing-v4.0.0-e080-s008880.pth",
       "source_relpath": "haruka_singing_v4_cloud_seg12800_e80_s8880.pth",
       "bytes": 55240442,
       "sha256": "ea0cf3f41b5afb0e44fe272c33950c031b6f9beb886bbaa982535e92807b4d73"
