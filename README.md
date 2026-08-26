@@ -17,6 +17,7 @@ git switch -c feat/example
 python -m pip install -r requirements-coverprep.txt
 python -m unittest discover -s tests -p "test_*.py" -v
 python tools/check_repo_policy.py .
+python tools/model_registry.py validate --directory manifests/models
 git diff --cached
 git commit -m "feat: describe the change"
 git push -u origin feat/example
@@ -48,6 +49,8 @@ python -m coverprep.v3_cli --help
 python -m coverprep --help
 ```
 
+`config/coverprep_v3.defaults.json`、Profiles 和模板只保留相对路径或空占位符；实际 MFA、DiffSinger、MSST、GAME、GPT-SoVITS 路径必须在本机任务配置中填写。
+
 批处理入口会优先使用仓库旁的 `coverprep_env`，不存在时回退到当前 Python：
 
 ```powershell
@@ -55,6 +58,8 @@ python -m coverprep --help
 ```
 
 默认生成物放在 `D:/语音模型/Haruka-SVS-Covers`，不与源码和 Git 历史混在一起。`config/tools.local.yaml`、`coverprep_env`、日志和生成目录均由 `.gitignore` 与 CI 文件边界检查排除。
+
+CI 会安装 Python 依赖和 Ubuntu 的 `ffmpeg`，但不会安装或下载 MFA、MSST、GAME、GPT-SoVITS、Open JTalk 及其模型。它们属于本机工具链，需在 `config/tools.local.yaml` 中配置，并先运行 `python -m coverprep doctor --tool-config config/tools.local.yaml` 做预检。
 
 ## 权重原则
 

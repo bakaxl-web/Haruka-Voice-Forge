@@ -50,6 +50,15 @@ class RepositoryPolicyTests(unittest.TestCase):
 
         self.assertEqual(scan_paths(self.root), [])
 
+    def test_reports_secret_inside_ignored_generated_output(self):
+        secret = self.root / "outputs" / "job" / ".env"
+        secret.parent.mkdir(parents=True)
+        secret.write_text("TOKEN=secret\n", encoding="utf-8")
+
+        violations = scan_paths(self.root)
+
+        self.assertEqual(violations, [{"path": "outputs/job/.env", "reason": "secret-file"}])
+
 
 if __name__ == "__main__":
     unittest.main()

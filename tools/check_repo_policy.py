@@ -48,10 +48,9 @@ def scan_paths(root: Path, max_bytes: int = MAX_GIT_FILE_BYTES) -> list[dict[str
     violations: list[dict[str, object]] = []
     for path in root.rglob("*"):
         relative = path.relative_to(root)
-        if any(part in IGNORED_DIRECTORIES for part in relative.parts[:-1]):
-            continue
         if not path.is_file():
             continue
+        ignored_artifact = any(part in IGNORED_DIRECTORIES for part in relative.parts[:-1])
         relative_name = relative.as_posix()
         if path.name == ".env" or path.name.startswith(".env.") or path.suffix.lower() in {
             ".key",
@@ -59,6 +58,9 @@ def scan_paths(root: Path, max_bytes: int = MAX_GIT_FILE_BYTES) -> list[dict[str
             ".token",
         }:
             violations.append({"path": relative_name, "reason": "secret-file"})
+        # 权重和生成物目录在 D 盘本地保留；即使跳过其大文件，也不能掩盖密钥。
+        if ignored_artifact:
+            continue
         if path.suffix.lower() in FORBIDDEN_SUFFIXES:
             violations.append({"path": relative_name, "reason": "forbidden-extension"})
         if path.stat().st_size > max_bytes:

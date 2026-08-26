@@ -60,7 +60,8 @@ languages:
       - ɾʲ
       - ʑ
       - ʔ
-    dictionary: D:/语音模型/Haruka-SVS-Pilot/song-011/dataset/diffsinger_final_v3/dictionary_song011_final.dict
+    # song-011 的本机词典由任务配置提供，不写入公共仓库。
+    dictionary: ''
     dictionary_scope: verified Haruka entries; per-song additions require review
     special_phonemes: [SP, AP, <PAD>]
 sampling_rate: 44100
@@ -77,5 +78,5 @@ variance:
   predict_breathiness: false
   predict_voicing: false
 vocoder: NsfHifiGAN
-vocoder_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/acoustic.yaml
-variance_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/variance.yaml
+vocoder_config: ''
+variance_config: ''

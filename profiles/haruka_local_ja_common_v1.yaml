@@ -78,5 +78,6 @@ variance:
   predict_breathiness: false
   predict_voicing: false
 vocoder: NsfHifiGAN
-vocoder_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/acoustic.yaml
-variance_config: D:/语音模型/Haruka-SVS-Tools/DiffSinger/configs/variance.yaml
+# 本机 DiffSinger 配置不进入公共仓库；运行前在任务或本机配置中填写。
+vocoder_config: ''
+variance_config: ''

@@ -8,6 +8,7 @@ from tools.model_registry import (
     build_parser,
     inventory_paths,
     stage_release,
+    validate_manifest_schema,
     verify_manifest,
 )
 
@@ -116,6 +117,23 @@ class ModelRegistryTests(unittest.TestCase):
         self.assertEqual(args.model_version, "model-test")
         self.assertEqual(args.run_id, "run-test")
         self.assertEqual(args.model_family, "rvc-singing")
+
+    def test_validate_manifest_schema_rejects_invalid_file_hash(self):
+        manifest_path = self.root / "manifest.json"
+        manifest = inventory_paths([self.weight], manifest_path, self.metadata())
+        manifest["files"][0]["sha256"] = "not-a-sha256"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        with self.assertRaises(RegistryError):
+            validate_manifest_schema(manifest_path)
+
+    def test_cli_accepts_manifest_directory_validation(self):
+        args = build_parser().parse_args(
+            ["validate", "--directory", str(self.root)]
+        )
+
+        self.assertEqual(args.command, "validate")
+        self.assertEqual(args.directory, self.root)
 
 
 if __name__ == "__main__":

@@ -33,3 +33,6 @@ jobs:
 
       - name: Check repository file policy
         run: python tools/check_repo_policy.py .
+
+      - name: Validate model manifest schema
+        run: python tools/model_registry.py validate --directory manifests/models

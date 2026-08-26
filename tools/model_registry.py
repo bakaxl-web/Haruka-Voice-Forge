@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import Iterable, Mapping, Sequence
 SCHEMA_VERSION = "haruka-model-manifest-v1"
 MODEL_SUFFIXES = {".pth", ".ckpt", ".index", ".onnx", ".safetensors"}
 MODEL_STATUSES = {"candidate", "stable", "archived", "legacy-imported"}
+MODEL_FILE_ROLES = {"index", "inference_weight", "resume_checkpoint"}
 REQUIRED_METADATA_FIELDS = {
     "schema_version",
     "model_version",
@@ -154,6 +156,38 @@ def _load_manifest(manifest: Mapping[str, object] | Path) -> dict[str, object]:
     return data
 
 
+def _validate_file_record(record: Mapping[str, object]) -> None:
+    """校验文件项的静态字段；不读取权重内容。"""
+    missing_file_fields = sorted(REQUIRED_FILE_FIELDS - set(record))
+    if missing_file_fields:
+        raise RegistryError(
+            f"模型清单文件项缺少必填字段: {', '.join(missing_file_fields)}"
+        )
+    role = str(record.get("role", ""))
+    if role not in MODEL_FILE_ROLES:
+        raise RegistryError(f"模型清单文件项 role 无效: {role}")
+    name = str(record.get("name", ""))
+    path = Path(name)
+    if not name or path.name != name or ".." in path.parts:
+        raise RegistryError(f"模型清单文件名不安全: {name}")
+    size = record.get("bytes")
+    if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
+        raise RegistryError(f"模型清单文件大小无效: {name}")
+    digest = str(record.get("sha256", ""))
+    if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise RegistryError(f"模型清单 SHA-256 无效: {name}")
+
+
+def validate_manifest_schema(manifest: Mapping[str, object] | Path) -> dict[str, object]:
+    """只校验模型清单结构，供 CI 在没有权重文件时执行。"""
+    data = _load_manifest(manifest)
+    for record in data["files"]:
+        if not isinstance(record, dict):
+            raise RegistryError("模型清单 files 含有无效项")
+        _validate_file_record(record)
+    return data
+
+
 def _resolve_record(record: Mapping[str, object], roots: Sequence[Path]) -> Path:
     name = str(record.get("name", ""))
     relative = str(record.get("source_relpath", name))
@@ -182,17 +216,12 @@ def verify_manifest(
     manifest: Mapping[str, object] | Path, roots: Sequence[Path]
 ) -> list[dict[str, object]]:
     """校验清单中的每个文件，成功返回空列表，失败抛出 RegistryError。"""
-    data = _load_manifest(manifest)
+    data = validate_manifest_schema(manifest)
     if not roots:
         raise RegistryError("至少需要一个校验 root")
     for record in data["files"]:
         if not isinstance(record, dict):
             raise RegistryError("模型清单 files 含有无效项")
-        missing_file_fields = sorted(REQUIRED_FILE_FIELDS - set(record))
-        if missing_file_fields:
-            raise RegistryError(
-                f"模型清单文件项缺少必填字段: {', '.join(missing_file_fields)}"
-            )
         path = _resolve_record(record, roots)
         actual_size = path.stat().st_size
         expected_size = int(record.get("bytes", -1))
@@ -310,6 +339,11 @@ def build_parser() -> argparse.ArgumentParser:
     stage.add_argument("--manifest", required=True, type=Path)
     stage.add_argument("--root", action="append", required=True, type=Path)
     stage.add_argument("--destination", required=True, type=Path)
+
+    validate = subparsers.add_parser("validate", help="校验模型清单结构")
+    manifest_group = validate.add_mutually_exclusive_group(required=True)
+    manifest_group.add_argument("--manifest", action="append", type=Path)
+    manifest_group.add_argument("--directory", type=Path)
     return parser
 
 
@@ -322,9 +356,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "verify":
             verify_manifest(args.manifest, args.root)
             print(json.dumps({"verified": True, "manifest": str(args.manifest)}, ensure_ascii=False))
-        else:
+        elif args.command == "stage-release":
             result = stage_release(args.manifest, args.root, args.destination)
             print(json.dumps(result, ensure_ascii=False))
+        else:
+            manifests = list(args.manifest or [])
+            if args.directory:
+                manifests = sorted(args.directory.glob("*.json"))
+            if not manifests:
+                raise RegistryError("没有找到待校验的模型清单")
+            for manifest in manifests:
+                validate_manifest_schema(manifest)
+            print(json.dumps({"validated": len(manifests)}, ensure_ascii=False))
         return 0
     except (OSError, RegistryError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
