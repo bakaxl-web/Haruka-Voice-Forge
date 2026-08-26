@@ -52,12 +52,14 @@ class RvcAlignedTests(unittest.TestCase):
         self.assertTrue(np.isfinite(final).all())
 
     def test_configure_model_root_uses_nested_model_directory(self):
-        model_path = r"D:\models\v1_100_rounds\model.pth"
-        configure_model_root(model_path)
+        with TemporaryDirectory() as temporary_directory:
+            model_path = Path(temporary_directory) / "models" / "v1_100_rounds" / "model.pth"
+            configure_model_root(model_path)
 
-        import os
+            import os
 
-        self.assertEqual(os.environ["weight_root"], r"D:\models\v1_100_rounds")
+            # 使用临时目录验证嵌套模型目录，避免把 Windows 盘符写死在跨平台 CI 中。
+            self.assertEqual(os.environ["weight_root"], str(model_path.parent.resolve()))
 
     def test_resolve_rvc_app_root_requires_an_existing_directory(self):
         with TemporaryDirectory() as temporary_directory:
