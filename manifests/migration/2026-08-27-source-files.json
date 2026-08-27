@@ -591,13 +591,13 @@
       },
       "target_metadata": {
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\docs\\haruka-voice-project-technical-route.md",
-        "sha256": "5b7c917738de58829d0469b017ed1e34032f25fd7da41c9a00963b6b213ec78d",
-        "size_bytes": 21672,
-        "last_write_utc": "2026-08-26T02:21:20.5888840Z"
+        "sha256": "b24e296a25a16a1aa6bd08e59b6d0934ea097111503d6fa3365aa6b3d6543cfe",
+        "size_bytes": 21671,
+        "last_write_utc": "2026-08-27T06:43:07.8014036Z"
       },
       "action": "copied_new",
       "include_in_git": true,
-      "notes": "技术路线文档"
+      "notes": "技术路线文档；目标仓库按原内容保留但规范化了文件末尾空行"
     },
     {
       "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\docs\\superpowers\\plans\\2026-08-27-vocal2midi-old-pipeline-integration.md",
