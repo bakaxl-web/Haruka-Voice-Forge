@@ -143,6 +143,49 @@ class Vocal2MidiAdapterTests(unittest.TestCase):
             ],
         )
 
+    def test_runner_invocation_disables_shell(self):
+        from coverprep.vocal2midi import Vocal2MidiIntegrationError, run_vocal2midi
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            audio = root / "guide.wav"
+            audio.write_bytes(b"fixture")
+            config = {
+                "enabled": True,
+                "root": str(root / "vocal2midi"),
+                "python": str(root / "python.exe"),
+            }
+            with patch(
+                "coverprep.vocal2midi.subprocess.run",
+                return_value=CompletedProcess(
+                    args=["python"], returncode=3, stdout="stdout", stderr="stderr"
+                ),
+            ) as mocked_run:
+                with self.assertRaises(Vocal2MidiIntegrationError):
+                    run_vocal2midi(root / "run", audio, config)
+
+            self.assertFalse(mocked_run.call_args.kwargs["shell"])
+
+    def test_output_filename_rejects_path_traversal_before_subprocess(self):
+        from coverprep.vocal2midi import Vocal2MidiIntegrationError, run_vocal2midi
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            audio = root / "guide.wav"
+            audio.write_bytes(b"fixture")
+            config = {
+                "enabled": True,
+                "root": str(root / "vocal2midi"),
+                "python": str(root / "python.exe"),
+                "output_filename": r"..\outside",
+            }
+            with patch("coverprep.vocal2midi.subprocess.run") as mocked_run:
+                with self.assertRaisesRegex(Vocal2MidiIntegrationError, "普通文件名"):
+                    run_vocal2midi(root / "run", audio, config)
+
+            mocked_run.assert_not_called()
+            self.assertFalse((root / "outside.mid").exists())
+
     def test_external_failure_preserves_log_and_raises_integration_error(self):
         from coverprep.vocal2midi import Vocal2MidiIntegrationError, run_vocal2midi
 

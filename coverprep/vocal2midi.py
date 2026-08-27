@@ -51,6 +51,21 @@ def _is_set(value: Any) -> bool:
     return value is not None and bool(str(value).strip())
 
 
+def _validate_output_filename(value: Any) -> str:
+    """限制外部工具输出键为普通文件名，避免写出 raw 目录。"""
+    candidate = str(value if value is not None else "auto").strip()
+    invalid = {"", ".", ".."}
+    if (
+        candidate in invalid
+        or any(separator in candidate for separator in ("/", "\\"))
+        or Path(candidate).is_absolute()
+        or ":" in candidate
+        or any(ord(char) < 32 or char in '<>"|?*' for char in candidate)
+    ):
+        raise Vocal2MidiIntegrationError("Vocal2Midi output_filename 必须是普通文件名")
+    return candidate
+
+
 def _to_hiragana(text: str) -> str:
     result: list[str] = []
     for char in text:
@@ -139,7 +154,7 @@ def _resolved_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "output_pitch_curve": bool(config.get("output_pitch_curve", True)),
         "debug_mode": bool(config.get("debug_mode", False)),
         "timeout_sec": float(config.get("timeout_sec", 3600.0)),
-        "output_filename": str(config.get("output_filename", "auto")),
+        "output_filename": _validate_output_filename(config.get("output_filename", "auto")),
     }
     model_defaults = {
         "game_model_dir": root / "experiments" / "GAME-1.0.3-medium-onnx",
@@ -264,6 +279,17 @@ def _request_hash(request: Mapping[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _output_path(output_dir: Path, output_key: str, suffix: str) -> Path:
+    """二次确认输出路径位于 raw 目录，防止未来放宽文件名校验时越界。"""
+    raw_root = output_dir.resolve()
+    candidate = (raw_root / f"{output_key}{suffix}").resolve()
+    try:
+        candidate.relative_to(raw_root)
+    except ValueError as exc:
+        raise Vocal2MidiIntegrationError("Vocal2Midi 输出路径必须位于 raw 目录") from exc
+    return candidate
+
+
 def run_vocal2midi(
     run_dir: Path,
     audio_path: Path,
@@ -304,9 +330,9 @@ def run_vocal2midi(
     if result.returncode != 0:
         raise Vocal2MidiIntegrationError(f"Vocal2Midi 返回非零状态 {result.returncode}，详见 {log_path}")
 
-    output_key = str(request["output_filename"])
-    midi_path = output_dir / f"{output_key}.mid"
-    csv_path = output_dir / f"{output_key}.csv"
+    output_key = _validate_output_filename(request["output_filename"])
+    midi_path = _output_path(output_dir, output_key, ".mid")
+    csv_path = _output_path(output_dir, output_key, ".csv")
     if not midi_path.is_file() or midi_path.stat().st_size <= 0:
         raise Vocal2MidiIntegrationError(f"Vocal2Midi 未生成有效 MIDI：{midi_path}")
     if not csv_path.is_file() or csv_path.stat().st_size <= 0:
@@ -334,9 +360,9 @@ def run_vocal2midi(
         "midi": file_metadata(midi_path),
         "csv": file_metadata(csv_path),
         "lyrics_tsv": file_metadata(lyrics_path),
-        "ustx": file_metadata(output_dir / f"{output_key}.ustx"),
-        "txt": file_metadata(output_dir / f"{output_key}.txt"),
-        "match_log": file_metadata(output_dir / f"{output_key}_asr_match_log.txt"),
+        "ustx": file_metadata(_output_path(output_dir, output_key, ".ustx")),
+        "txt": file_metadata(_output_path(output_dir, output_key, ".txt")),
+        "match_log": file_metadata(_output_path(output_dir, output_key, "_asr_match_log.txt")),
         "note_count": len(lyrics_rows),
         "missing_lyric_count": missing_count,
         "missing_lyric_markers": sorted(

@@ -192,13 +192,13 @@
       },
       "target_metadata": {
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\vocal2midi.py",
-        "sha256": "91a64e823a5f474bb98558175d829156345a9ec9ae7219ab5ff464b745e3e1ca",
-        "size_bytes": 14774,
-        "last_write_utc": "2026-08-27T03:45:04.3544649Z"
+        "sha256": "323c10a938215d63cad1ee10c179d446947779983369f6c9c6847c6e68d94b79",
+        "size_bytes": 15960,
+        "last_write_utc": "2026-08-27T07:00:51.3191772Z"
       },
       "action": "copied_new",
       "include_in_git": true,
-      "notes": "Vocal2Midi 外部适配器"
+      "notes": "Vocal2Midi 外部适配器；补充 output_filename 目录穿越约束"
     },
     {
       "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\vocal2midi_runner.py",
@@ -306,13 +306,13 @@
       },
       "target_metadata": {
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_vocal2midi.py",
-        "sha256": "6a93b7967bab8a02bc9ce5889c6c30d43b8a3fce91be473553ff904d74ed8a85",
-        "size_bytes": 16891,
-        "last_write_utc": "2026-08-27T04:24:31.6835673Z"
+        "sha256": "ba492717a80cec54e5b82c6093024cb5f1cf460282204dea7541e29bed31a292",
+        "size_bytes": 18706,
+        "last_write_utc": "2026-08-27T07:00:22.7745035Z"
       },
       "action": "copied_new",
       "include_in_git": true,
-      "notes": "Vocal2Midi 单元测试"
+      "notes": "Vocal2Midi 单元测试；补充 shell=False 与输出路径安全回归"
     },
     {
       "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_dataset_finalize.py",
