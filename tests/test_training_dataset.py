@@ -518,6 +518,22 @@ class TrainingDatasetTests(unittest.TestCase):
         self.assertEqual(args.command, "dataset")
         self.assertEqual(args.dataset_command, "note-candidates")
 
+    def test_cli_note_candidates_accepts_manual_review_report(self):
+        from coverprep.cli import build_parser
+
+        args = build_parser().parse_args(
+            [
+                "dataset",
+                "note-candidates",
+                "--dataset",
+                "fixture",
+                "--manual-review-report",
+                "reports/manual.json",
+            ]
+        )
+
+        self.assertEqual(args.manual_review_report, Path("reports/manual.json"))
+
     def test_note_candidates_write_drafts_without_unlocking_blocked_g2p(self):
         from coverprep.training_dataset import generate_dataset_note_candidates
 
@@ -635,6 +651,109 @@ class TrainingDatasetTests(unittest.TestCase):
             self.assertEqual(song_report["verified_rest_boundaries"], [1])
             self.assertEqual(song_report["status"], "DRAFT_READY")
             self.assertNotIn("MIDI_GAP_AUDIO_CONFLICT", {issue["type"] for issue in song_report["issues"]})
+
+    def test_note_candidates_consumes_manual_gap_decision_only_for_matching_manifest(self):
+        from coverprep.training_dataset import generate_dataset_note_candidates
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            song_dir = root / "songs" / "song-001"
+            (song_dir / "lyrics").mkdir(parents=True)
+            (song_dir / "score").mkdir(parents=True)
+            (root / "reports").mkdir(parents=True)
+            source = root / "source.wav"
+            source.write_bytes(b"source")
+            (song_dir / "source.json").write_text(json.dumps({"source_path": str(source)}), encoding="utf-8")
+            (root / "reports" / "g2p_candidates.json").write_text(
+                json.dumps({"songs": {"song-001": {"status": "CANDIDATE_READY"}}}),
+                encoding="utf-8",
+            )
+            (song_dir / "lyrics" / "candidate_occurrences.json").write_text(
+                json.dumps([{"phrase_id": "p001", "surface": "あ", "phones": ["a", "i", "u", "e"]}]),
+                encoding="utf-8",
+            )
+            (song_dir / "score" / "auto_notes.json").write_text(
+                json.dumps(
+                    [
+                        {"note": "C4", "start": 0.0, "end": 0.4, "duration": 0.4},
+                        {"note": "D4", "start": 1.0, "end": 1.4, "duration": 0.4},
+                        {"note": "E4", "start": 1.4, "end": 1.8, "duration": 0.4},
+                        {"note": "F4", "start": 1.8, "end": 2.2, "duration": 0.4},
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (root / "reports" / "gap_listening_manifest_v4.json").write_text(
+                json.dumps({"source_report_sha256": "report-sha"}),
+                encoding="utf-8",
+            )
+            manual = root / "reports" / "manual_review_import_v1.json"
+            manual.write_text(
+                json.dumps(
+                    {
+                        "gap_source": {
+                            "manifest": "reports/gap_listening_manifest_v4.json",
+                            "manifest_source_report_sha256": "report-sha",
+                        },
+                        "gap_decisions": {
+                            "按休止处理": [],
+                            "按谱保留": [
+                                {"song_id": "song-001", "boundary_index": 1, "current_clip_id": "0001"}
+                            ],
+                        },
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            with patch(
+                "coverprep.note_mapping.find_large_midi_gaps",
+                return_value=[{"boundary_index": 1, "start_sec": 0.4, "end_sec": 1.0, "duration_sec": 0.6}],
+            ), patch(
+                "coverprep.note_mapping.analyze_audio_gap",
+                return_value={"boundary_index": 1, "status": "VOCAL_EVIDENCE"},
+            ):
+                report = generate_dataset_note_candidates(
+                    root,
+                    song_ids=["song-001"],
+                    manual_review_path=manual,
+                )
+
+            song_report = report["songs"]["song-001"]
+            self.assertEqual(song_report["status"], "DRAFT_READY")
+            self.assertEqual(song_report["manual_gap_decisions"]["按谱保留"], [1])
+            issue_types = {issue["type"] for issue in song_report["issues"]}
+            self.assertNotIn("INTRA_PHRASE_MIDI_GAP", issue_types)
+            self.assertNotIn("MIDI_GAP_AUDIO_CONFLICT", issue_types)
+
+    def test_manual_gap_decisions_reject_manifest_hash_mismatch(self):
+        from coverprep.training_dataset import TrainingDatasetError, load_manual_gap_decisions
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            reports = root / "reports"
+            reports.mkdir(parents=True)
+            (reports / "gap_listening_manifest_v4.json").write_text(
+                json.dumps({"source_report_sha256": "current-sha"}),
+                encoding="utf-8",
+            )
+            manual = reports / "manual.json"
+            manual.write_text(
+                json.dumps(
+                    {
+                        "gap_source": {
+                            "manifest": "gap_listening_manifest_v4.json",
+                            "manifest_source_report_sha256": "old-sha",
+                        },
+                        "gap_decisions": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(TrainingDatasetError):
+                load_manual_gap_decisions(root, manual)
 
     def test_g2p_candidates_read_ocr_draft_without_promoting_formal_lyrics(self):
         from coverprep.training_dataset import generate_dataset_g2p_candidates
@@ -766,6 +885,58 @@ class TrainingDatasetTests(unittest.TestCase):
             self.assertEqual(report["status"], "CROSSCHECK_READY")
             self.assertEqual(report["secondary_backend"], "mfa_japanese")
             self.assertEqual(report["pending_count"], 0)
+
+    def test_g2p_crosscheck_override_clears_unknown_from_raw_secondary_backend(self):
+        from coverprep.training_dataset import crosscheck_dataset_g2p
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            lyrics_dir = root / "songs" / "song-001" / "lyrics"
+            lyrics_dir.mkdir(parents=True)
+            (lyrics_dir / "ocr_draft.tsv").write_text(
+                "phrase_id\tsurface\treading\tnote_count\tsource_image\treview_status\n"
+                "p001\tきゃ\t\t0\tshot.png\tOCR_DRAFT\n",
+                encoding="utf-8",
+            )
+            (lyrics_dir / "candidate_occurrences.json").write_text(
+                json.dumps(
+                    [{
+                        "phrase_id": "p001",
+                        "key": "きゃ",
+                        "surface": "きゃ",
+                        "reading": "",
+                        "phones": ["ç", "a"],
+                        "unknown": [],
+                        "latin_text": False,
+                    }],
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            (lyrics_dir / "reviewed_override.dict").write_text(
+                "きゃ\tç a\n",
+                encoding="utf-8",
+            )
+            profile = Path(tmp) / "profile.yaml"
+            profile.write_text("languages:\n  ja:\n    phonemes: [ç, a]\n", encoding="utf-8")
+            tools = Path(tmp) / "tools.yaml"
+            tools.write_text("g2p:\n  python: fake-python\n  cwd: .\n", encoding="utf-8")
+
+            with patch("coverprep.g2p.run_pyopenjtalk_batch", return_value=[["hy", "a"]]):
+                report = crosscheck_dataset_g2p(
+                    root,
+                    model_profile_path=profile,
+                    tool_config_path=tools,
+                    secondary_backend="pyopenjtalk",
+                    secondary_python=Path("fake-python"),
+                    secondary_cwd=Path("."),
+                    song_ids=["song-001"],
+                )
+
+            self.assertEqual(report["status"], "CROSSCHECK_READY")
+            rows = json.loads((lyrics_dir / "g2p_crosscheck.json").read_text(encoding="utf-8"))
+            self.assertEqual(rows[0]["status"], "auto_locked_override")
+            self.assertEqual(rows[0]["unknown"], [])
 
     def test_g2p_candidates_apply_song_local_reviewed_override(self):
         from coverprep.training_dataset import generate_dataset_g2p_candidates

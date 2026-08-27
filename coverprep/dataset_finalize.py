@@ -1843,7 +1843,10 @@ def _freeze_expanded_source(source_dataset: Path, base_dataset: Path) -> dict[st
             continue
         if all(_expanded_status_rejected(status) for status in statuses):
             excluded_song_ids.append(song_id)
-        elif all(_expanded_status_pass(status) for status in statuses):
+        elif any(_expanded_status_pass(status) for status in statuses):
+            # 一首歌可以保留通过窗口，同时把明确拒绝的局部窗口交给
+            # excluded_intervals.batch_repair.json；不能把这种合法的
+            # “通过 + 排除”组合误判为整首歌曲的混合阻塞。
             accepted_song_ids.append(song_id)
         else:
             blockers.append({"type": "AUDIO_REVIEW_MIXED_STATUS", "song_id": song_id})

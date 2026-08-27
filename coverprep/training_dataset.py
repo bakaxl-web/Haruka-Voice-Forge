@@ -726,6 +726,74 @@ def _gap_overlaps_accepted_windows(
     )
 
 
+MANUAL_GAP_DECISIONS = {"按休止处理", "按谱保留"}
+
+
+def load_manual_gap_decisions(
+    dataset_root: Path,
+    manual_review_path: Path | None,
+) -> dict[str, Any]:
+    """读取并校验人工间隙审核台账，返回按歌曲和边界索引整理的决定。
+
+    台账必须指向当前 gap listening manifest 的来源报告哈希；这样旧音源的
+    试听结论不会被静默套到换源后的歌曲上。此函数只读文件，不改变任何数据。
+    """
+    if manual_review_path is None:
+        return {"path": "", "manifest": "", "source_report_sha256": "", "by_song": {}}
+    dataset_root = dataset_root.resolve()
+    path = _absolute_path(manual_review_path, dataset_root)
+    payload = load_json(path, None)
+    if not isinstance(payload, dict):
+        raise TrainingDatasetError(f"人工审核台账不是有效 JSON 对象: {path}")
+    gap_source = payload.get("gap_source")
+    if not isinstance(gap_source, dict):
+        raise TrainingDatasetError(f"人工审核台账缺少 gap_source: {path}")
+    manifest = _absolute_path(str(gap_source.get("manifest") or ""), dataset_root)
+    manifest_payload = load_json(manifest, None)
+    if not isinstance(manifest_payload, dict):
+        raise TrainingDatasetError(f"人工审核台账引用的 manifest 无效: {manifest}")
+    expected_sha = str(gap_source.get("manifest_source_report_sha256") or "").strip().lower()
+    actual_sha = str(manifest_payload.get("source_report_sha256") or "").strip().lower()
+    if not expected_sha or expected_sha != actual_sha:
+        raise TrainingDatasetError(
+            "人工间隙审核台账与当前 manifest 来源报告哈希不一致: "
+            f"expected={expected_sha or '<missing>'}, actual={actual_sha or '<missing>'}"
+        )
+
+    raw_decisions = payload.get("gap_decisions", {})
+    if not isinstance(raw_decisions, dict):
+        raise TrainingDatasetError(f"人工审核台账的 gap_decisions 不是对象: {path}")
+    by_song: dict[str, dict[int, str]] = {}
+    for decision, rows in raw_decisions.items():
+        if decision not in MANUAL_GAP_DECISIONS:
+            raise TrainingDatasetError(f"人工审核台账包含不支持的间隙决定: {decision}")
+        if not isinstance(rows, list):
+            raise TrainingDatasetError(f"人工审核台账的间隙决定不是数组: {decision}")
+        for row in rows:
+            if not isinstance(row, dict):
+                raise TrainingDatasetError(f"人工审核台账存在非对象间隙条目: {decision}")
+            song_id = str(row.get("song_id") or "").strip()
+            if not song_id:
+                raise TrainingDatasetError(f"人工审核台账间隙条目缺少 song_id: {decision}")
+            try:
+                boundary_index = int(row.get("boundary_index"))
+            except (TypeError, ValueError) as exc:
+                raise TrainingDatasetError(f"人工审核台账间隙条目缺少有效 boundary_index: {song_id}") from exc
+            song_decisions = by_song.setdefault(song_id, {})
+            previous = song_decisions.get(boundary_index)
+            if previous and previous != decision:
+                raise TrainingDatasetError(
+                    f"人工审核台账对同一边界给出冲突决定: {song_id} boundary={boundary_index}"
+                )
+            song_decisions[boundary_index] = decision
+    return {
+        "path": str(path),
+        "manifest": str(manifest),
+        "source_report_sha256": actual_sha,
+        "by_song": by_song,
+    }
+
+
 def build_score_repair_candidates(
     coverage: dict[str, Any],
     windows: list[dict[str, Any]],
@@ -1724,7 +1792,10 @@ def crosscheck_dataset_g2p(
                     primary_phones = canonical_phones(old.get("phones", []))
                     override_phones = canonical_phones(override[key]) if key in override else []
                     secondary_phones = override_phones or canonical_phones(new.get("phones", []))
-                    has_unknown = bool(new.get("unknown")) or any(phone not in allowed for phone in secondary_phones)
+                    # 审核覆盖替代第二后端原始结果后，未知音素必须按最终生效的音素重新计算，
+                    # 避免把已被覆盖掉的原始 hy 等标记继续写入交叉核对报告。
+                    secondary_unknown = sorted({phone for phone in secondary_phones if phone not in allowed})
+                    has_unknown = bool(secondary_unknown)
                     same = primary_phones == secondary_phones and not has_unknown
                     locked_by_override = key in override
                     status = "auto_locked_override" if locked_by_override else ("auto_locked" if same else "pending")
@@ -1735,7 +1806,7 @@ def crosscheck_dataset_g2p(
                         "latin_text": bool(old.get("latin_text")),
                         "review_flags": sorted(set(str(flag) for flag in old.get("review_flags", []))),
                         "status": status,
-                        "unknown": sorted(set(str(phone) for phone in new.get("unknown", []))),
+                        "unknown": secondary_unknown,
                     })
             except (G2PError, OSError, ValueError, StopIteration) as exc:
                 song_issues.append({
@@ -1790,6 +1861,7 @@ def generate_dataset_note_candidates(
     dataset_root: Path,
     *,
     song_ids: list[str] | None = None,
+    manual_review_path: Path | None = None,
 ) -> dict[str, Any]:
     """根据 G2P 候选和自动 MIDI 生成可追溯的音符分配草稿。
 
@@ -1799,6 +1871,8 @@ def generate_dataset_note_candidates(
     from .note_mapping import analyze_audio_gap, build_note_mapping, find_large_midi_gaps
 
     dataset_root = dataset_root.resolve()
+    manual_review = load_manual_gap_decisions(dataset_root, manual_review_path)
+    manual_gaps_by_song: dict[str, dict[int, str]] = manual_review.get("by_song", {})
     songs_root = dataset_root / "songs"
     available = sorted(
         path.name
@@ -1835,6 +1909,15 @@ def generate_dataset_note_candidates(
         score_dir = song_dir / "score"
         song_issues: list[dict[str, Any]] = []
         result = None
+        manual_song_gaps = {
+            int(boundary): str(decision)
+            for boundary, decision in manual_gaps_by_song.get(song_id, {}).items()
+        }
+        active_gaps: list[dict[str, Any]] = []
+        accepted_windows: list[dict[str, Any]] | None = None
+        gap_evidence: list[dict[str, Any]] = []
+        excluded_gap_evidence: list[dict[str, Any]] = []
+        verified_gap_indices: set[int] = set()
         g2p_song = g2p_songs.get(song_id, {}) if isinstance(g2p_songs, dict) else {}
         if not isinstance(g2p_song, dict) or not g2p_song:
             song_issues.append(
@@ -1885,8 +1968,6 @@ def generate_dataset_note_candidates(
             else:
                 source = load_json(song_dir / "source.json", {}) or {}
                 source_audio = Path(str(source.get("source_path", "")))
-                gap_evidence: list[dict[str, Any]] = []
-                excluded_gap_evidence: list[dict[str, Any]] = []
                 accepted_windows = load_json(song_dir / "accepted_windows.json", None)
                 all_gaps: list[dict[str, Any]] = []
                 active_gaps: list[dict[str, Any]] = []
@@ -1907,6 +1988,17 @@ def generate_dataset_note_candidates(
                 else:
                     # 兼容尚未冻结窗口的旧 fixture；真实训练集必须有 accepted_windows.json。
                     active_gaps = find_large_midi_gaps(notes)
+                active_gap_indices = {
+                    int(item["boundary_index"])
+                    for item in active_gaps
+                    if item.get("boundary_index") is not None
+                }
+                unknown_manual_boundaries = sorted(set(manual_song_gaps) - active_gap_indices)
+                if unknown_manual_boundaries:
+                    raise TrainingDatasetError(
+                        f"人工审核台账包含当前歌曲不存在的 MIDI 间隙: {song_id}: "
+                        + ", ".join(str(value) for value in unknown_manual_boundaries)
+                    )
                 if source_audio.is_file():
                     gap_evidence = [analyze_audio_gap(source_audio, gap) for gap in active_gaps]
                 else:
@@ -1919,26 +2011,55 @@ def generate_dataset_note_candidates(
                             "proposed_value": str(source_audio),
                         }
                     )
-                verified_gap_indices = {
+                automatic_rest_boundaries = {
                     int(item["boundary_index"])
                     for item in gap_evidence
                     if item.get("status") == "REST_CANDIDATE" and item.get("boundary_index") is not None
                 }
+                verified_gap_indices = automatic_rest_boundaries | {
+                    boundary
+                    for boundary, decision in manual_song_gaps.items()
+                    if decision == "按休止处理"
+                }
                 result = build_note_mapping(entries, notes, verified_gap_indices=verified_gap_indices)
-                active_gap_indices = {
-                    int(item["boundary_index"])
-                    for item in active_gaps
-                    if item.get("boundary_index") is not None
+                realign_failed_boundaries = {
+                    int(issue.get("boundary_index"))
+                    for issue in result.issues
+                    if issue.get("type") == "AUTO_BOUNDARY_REALIGNMENT_FAILED"
+                    and issue.get("boundary_index") is not None
                 }
                 for issue in result.issues:
+                    boundary = issue.get("boundary_index")
+                    try:
+                        boundary_index = int(boundary) if boundary is not None else None
+                    except (TypeError, ValueError):
+                        boundary_index = None
+                    manual_decision = manual_song_gaps.get(boundary_index) if boundary_index is not None else None
+                    if manual_decision == "按谱保留" and issue.get("type") == "INTRA_PHRASE_MIDI_GAP":
+                        continue
+                    if (
+                        manual_decision == "按休止处理"
+                        and issue.get("type") == "INTRA_PHRASE_MIDI_GAP"
+                        and boundary_index not in realign_failed_boundaries
+                    ):
+                        continue
                     if (
                         issue.get("type") == "INTRA_PHRASE_MIDI_GAP"
-                        and int(issue.get("boundary_index", -1)) not in active_gap_indices
+                        and boundary_index not in active_gap_indices
                         and isinstance(accepted_windows, list)
                     ):
                         continue
                     song_issues.append({**issue, "song_id": song_id, "stage": "note_mapping"})
                 for evidence in gap_evidence:
+                    boundary = evidence.get("boundary_index")
+                    try:
+                        boundary_index = int(boundary) if boundary is not None else None
+                    except (TypeError, ValueError):
+                        boundary_index = None
+                    if boundary_index in manual_song_gaps:
+                        # 人工试听已明确给出按谱/按休止结论，保留原始自动证据但不再
+                        # 把同一边界重复列为阻塞问题；休止重分配失败仍由上面的结构问题拦截。
+                        continue
                     if evidence.get("status") == "VOCAL_EVIDENCE":
                         song_issues.append(
                             {
@@ -1991,6 +2112,12 @@ def generate_dataset_note_candidates(
                 "excluded_gap_count": len(excluded_gap_evidence),
                 "accepted_window_count": len(accepted_windows) if isinstance(accepted_windows, list) else None,
                 "verified_rest_boundaries": sorted(verified_gap_indices) if isinstance(entries, list) and isinstance(notes, list) else [],
+                "manual_gap_decisions": {
+                    decision: sorted(boundary for boundary, value in manual_song_gaps.items() if value == decision)
+                    for decision in sorted(MANUAL_GAP_DECISIONS)
+                    if any(value == decision for value in manual_song_gaps.values())
+                },
+                "manual_review_report": manual_review.get("path", ""),
                 "note_mapping_draft": str((lyrics_dir / "note_mapping_draft.json").resolve()) if isinstance(entries, list) and isinstance(notes, list) else "",
                 "note_assignment_draft": str((score_dir / "note_assignment_draft.json").resolve()) if isinstance(entries, list) and isinstance(notes, list) else "",
                 "note": "自动音符分配只生成审核草稿；跨 MIDI 间隙、休止和歌词—音符语义仍需最终审核。",
@@ -2037,6 +2164,11 @@ def generate_dataset_note_candidates(
         "songs": song_reports,
         "issues": all_issues,
         "blocking_issue_count": len(blocking_issues),
+        "manual_review_report": manual_review.get("path", ""),
+        "manual_review_manifest": manual_review.get("manifest", ""),
+        "manual_gap_decision_count": sum(
+            len(decisions) for decisions in manual_gaps_by_song.values()
+        ),
         "note": "只有没有结构性阻塞的歌曲才会标记 DRAFT_READY；即使如此也不能跳过歌词、边界、对齐和 F0 审核。",
     }
     write_json(dataset_root / "reports" / "note_mapping_candidates.json", report)

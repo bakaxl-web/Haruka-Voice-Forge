@@ -154,6 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
     dataset_note.add_argument("--dataset", required=True)
     dataset_note.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
     dataset_note.add_argument("--song-id", action="append", dest="song_ids", help="只处理指定歌曲，可重复指定")
+    dataset_note.add_argument("--manual-review-report", type=Path, help="人工间隙审核台账；必须匹配当前 gap manifest")
     dataset_gap = dataset_sub.add_parser("repair-gaps", help="为高置信同音高有声间隙生成非破坏性谱面候选")
     dataset_gap.add_argument("--dataset", required=True)
     dataset_gap.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
@@ -319,7 +320,11 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"G2P 双后端核对：{report['status']}；待审核词条={report['pending_count']}；问题数={len(report['issues'])}")
                 return 0 if report["status"] == "CROSSCHECK_READY" else 1
             if args.dataset_command == "note-candidates":
-                report = generate_dataset_note_candidates(args.root / args.dataset, song_ids=args.song_ids)
+                report = generate_dataset_note_candidates(
+                    args.root / args.dataset,
+                    song_ids=args.song_ids,
+                    manual_review_path=args.manual_review_report,
+                )
                 print(f"音符候选：{report['status']}；草稿歌曲数={report['draft_song_count']}；阻塞歌曲数={report['blocked_song_count']}")
                 return 0 if report["status"] == "NOTE_CANDIDATES_READY" else 1
             if args.dataset_command == "repair-gaps":

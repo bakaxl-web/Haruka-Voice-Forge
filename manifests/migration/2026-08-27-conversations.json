@@ -7,15 +7,16 @@
   "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
   "source_project_path": "C:\\Users\\34618\\Documents\\novelm@ster",
   "target_project_registration": {
-    "status": "unavailable",
-    "reason": "Codex list_projects 当前未返回 D:\\语音模型\\Haruka-Voice-Forge，且可用 API 不提供直接注册已有本地仓库的操作。",
-    "native_move_count": 0,
-    "fallback": "完整 Markdown 归档"
+    "status": "registered",
+    "project_id": "e67ff45b-5c31-4d01-b50f-34ab3af08421",
+    "reason": "Codex list_projects 已返回 D:\\语音模型\\Haruka-Voice-Forge；目标本地项目已创建并可用于后续原生移动。",
+    "native_move_count": 12,
+    "fallback": "原生移动完成前保留完整 Markdown 归档"
   },
   "expected_conversation_count": 22,
   "conversation_count": 22,
   "archived_complete_count": 22,
-  "native_moved_count": 0,
+  "native_moved_count": 12,
   "selection_note": "纳入 20 个与 Haruka 语音/RVC/SVS 直接相关的 Codex 任务、Vocal2Midi 任务和当前迁移任务；排除项目 Git 管理任务及无项目归属的 ChatGPT 线程。",
   "completeness_note": "完整指用户/助手可见消息与工具调用/结果、命令执行、文件变更和计划记录；平台 system/developer scaffolding、推理原文和压缩 telemetry 排除。",
   "conversations": [
@@ -62,7 +63,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a01fa4-6210-7b53-9499-abedc1ee353f",
@@ -105,9 +106,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a02499-f462-78e2-8304-1d3e5b8cdee1",
@@ -150,9 +151,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a0365d-2aa6-7c01-bf0f-48e1249179ea",
@@ -195,9 +196,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a03bcd-9f75-7311-9db6-d63090454951",
@@ -240,9 +241,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a03ca4-3d50-7070-8f26-0b50b3ae3860",
@@ -285,9 +286,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a03c9c-e1b6-74e1-a5ed-3ab1f10f543b",
@@ -339,9 +340,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a03cac-d168-73d3-8dcf-f3fde9087b0f",
@@ -384,9 +385,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a0041e-7cd4-7790-b4b9-5d90fa742413",
@@ -431,7 +432,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a03de6-8807-71d0-add7-fee9df860bf0",
@@ -474,9 +475,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a00540-6777-7113-8874-8baf479c0482",
@@ -521,7 +522,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a00332-f82e-7983-a92c-4b3d0a6dc16a",
@@ -566,7 +567,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a00048-622f-7983-9c87-68583b12e2ef",
@@ -611,7 +612,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a00009-0ebf-7fe2-89ce-30028a9eaee9",
@@ -656,7 +657,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a01f07-fdca-7c33-9098-8bccb66724e5",
@@ -699,9 +700,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a0035b-2f4d-7532-9c14-d3a29e1bf9b1",
@@ -746,7 +747,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a026cf-6d2a-7fe1-9b6a-aec20bb2c126",
@@ -791,7 +792,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a02711-5260-75c0-bce8-b6abad73f471",
@@ -836,7 +837,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a037eb-22d1-7b33-bbad-6bbded790ff4",
@@ -897,9 +898,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a02735-808c-7a30-99d0-12367d59e8e7",
@@ -944,7 +945,7 @@
       },
       "status": "archived_complete",
       "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "note": "目标仓库已注册为 Codex 本地项目；原生移动尚未执行，当前继续保留完整本地 Markdown 归档，可按 thread_id 逐条移动后复核。"
     },
     {
       "thread_id": "01a040c0-bfa3-7683-a65c-a32c125eaac4",
@@ -996,9 +997,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     },
     {
       "thread_id": "01a03dd9-f1c5-7851-9b1d-f1ad06667f5d",
@@ -1041,9 +1042,9 @@
         "parse_errors": 0,
         "source_open_errors": 0
       },
-      "status": "archived_complete",
-      "native_move_available": false,
-      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+      "status": "native_moved",
+      "native_move_available": true,
+      "note": "已完成原生移动到目标 Codex 项目；同时保留完整本地 Markdown 归档，可按 thread_id 与归档哈希复核。"
     }
   ]
 }

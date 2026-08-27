@@ -113,6 +113,57 @@ class DatasetFinalizeContractTests(unittest.TestCase):
         self.assertEqual(result["accepted_song_ids"], ["song-010"])
         self.assertEqual(result["excluded_song_ids"], ["song-017"])
 
+    def test_expanded_freeze_accepts_song_with_excluded_window(self):
+        from coverprep.dataset_finalize import _freeze_expanded_source, _tree_hash, sha256_file
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            base = root / "v13"
+            source = root / "v14-work"
+            (base / "metadata").mkdir(parents=True)
+            (base / "metadata" / "manifest.jsonl").write_text(
+                json.dumps({"record_type": "training", "name": "base__w001"}) + "\n", encoding="utf-8"
+            )
+            (source / "metadata").mkdir(parents=True)
+            (source / "reports").mkdir(parents=True)
+            (source / "songs" / "song-022").mkdir(parents=True)
+            snapshot = {
+                "base_tree_sha256": _tree_hash(base),
+                "base_manifest_sha256": sha256_file(base / "metadata" / "manifest.jsonl"),
+                "base_package_sha256": {},
+                "base_record_count": 1,
+            }
+            (source / "metadata" / "base_v13_snapshot.json").write_text(json.dumps(snapshot), encoding="utf-8")
+            (source / "metadata" / "expansion_sources.json").write_text(
+                json.dumps({"songs": {"song-022": {}}}), encoding="utf-8"
+            )
+            review_rows = [
+                {"song_id": "song-022", "clip_id": "song-022-0001", "status": "AUDIO_REVIEW_PASS"},
+                {"song_id": "song-022", "clip_id": "song-022-0018", "status": "EXCLUDED"},
+            ]
+            (source / "reports" / "svs_audio_review.json").write_text(
+                json.dumps({"status": "APPROVED_WITH_EXCLUSIONS", "songs": review_rows}), encoding="utf-8"
+            )
+            audio_path = source / "songs" / "song-022" / "source.wav"
+            with wave.open(str(audio_path), "wb") as handle:
+                handle.setnchannels(2)
+                handle.setsampwidth(2)
+                handle.setframerate(44100)
+                handle.writeframes(b"\0\0\0\0")
+            (source / "songs" / "song-022" / "source.json").write_text(
+                json.dumps({"canonical_source_path": str(audio_path), "canonical_source_sha256": sha256_file(audio_path)}),
+                encoding="utf-8",
+            )
+            (source / "songs" / "song-022" / "accepted_windows.json").write_text(
+                json.dumps([{"start_sec": 0.0, "end_sec": 1.0}]), encoding="utf-8"
+            )
+
+            result = _freeze_expanded_source(source, base)
+
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["accepted_song_ids"], ["song-022"])
+        self.assertEqual(result["excluded_song_ids"], [])
+
     def test_expanded_baseline_rows_keep_semantic_fields_when_rebased(self):
         from coverprep.dataset_finalize import _load_base_training_rows
 
