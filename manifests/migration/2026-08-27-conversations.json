@@ -1,0 +1,1049 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-27T06:30:10.371218Z",
+  "target_repository": "D:\\语音模型\\Haruka-Voice-Forge",
+  "target_branch": "codex/migrate-vocal2midi-20260827",
+  "base_commit": "153d73f2a6c8783bdf8338568bf7eb489b179324",
+  "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+  "source_project_path": "C:\\Users\\34618\\Documents\\novelm@ster",
+  "target_project_registration": {
+    "status": "unavailable",
+    "reason": "Codex list_projects 当前未返回 D:\\语音模型\\Haruka-Voice-Forge，且可用 API 不提供直接注册已有本地仓库的操作。",
+    "native_move_count": 0,
+    "fallback": "完整 Markdown 归档"
+  },
+  "expected_conversation_count": 22,
+  "conversation_count": 22,
+  "archived_complete_count": 22,
+  "native_moved_count": 0,
+  "selection_note": "纳入 20 个与 Haruka 语音/RVC/SVS 直接相关的 Codex 任务、Vocal2Midi 任务和当前迁移任务；排除项目 Git 管理任务及无项目归属的 ChatGPT 线程。",
+  "completeness_note": "完整指用户/助手可见消息与工具调用/结果、命令执行、文件变更和计划记录；平台 system/developer scaffolding、推理原文和压缩 telemetry 排除。",
+  "conversations": [
+    {
+      "thread_id": "01a00a59-03ea-71d0-b147-c1940c60bf87",
+      "kind": "codex",
+      "title": "回顾模型训练历程",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\16\\rollout-2026-08-16T19-33-21-01a00a59-03ea-71d0-b147-c1940c60bf87.jsonl",
+          "size_bytes_at_start": 30669342,
+          "last_write_utc_at_start": "2026-08-20T14:47:24.146867Z",
+          "size_bytes_at_end": 30669342,
+          "last_write_utc_at_end": "2026-08-20T14:47:24.146867Z",
+          "sha256": "3690d06217bf39c3fcbb6ca0b077ddf787e876e70fd72f0e9b5565358f56e9be",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00a59-03ea-71d0-b147-c1940c60bf87.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00a59-03ea-71d0-b147-c1940c60bf87.md",
+        "sha256": "a5896e0f7baa8aa8aa3ac6013b8c61e17c60345cb70a8765dc5388d6d8654c51",
+        "size_bytes": 9519692,
+        "last_write_utc": "2026-08-27T06:29:58.030566Z"
+      },
+      "record_counts": {
+        "raw_lines": 10164,
+        "included_records": 3347,
+        "user_messages": 67,
+        "assistant_messages": 312,
+        "tool_calls": 1483,
+        "tool_results": 1483,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 2,
+        "scaffold_messages_skipped": 8,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 131,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a01fa4-6210-7b53-9499-abedc1ee353f",
+      "kind": "codex",
+      "title": "回顾模型训练历程 (2)",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\20\\rollout-2026-08-20T22-47-41-01a01fa4-6210-7b53-9499-abedc1ee353f.jsonl",
+          "size_bytes_at_start": 234478130,
+          "last_write_utc_at_start": "2026-08-21T14:23:29.013105Z",
+          "size_bytes_at_end": 234478130,
+          "last_write_utc_at_end": "2026-08-21T14:23:29.013105Z",
+          "sha256": "0d43e121396543a85401d37432d61e6226cee9c52ecc09f74700070b9a936caf",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a01fa4-6210-7b53-9499-abedc1ee353f.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a01fa4-6210-7b53-9499-abedc1ee353f.md",
+        "sha256": "932216e3440236fd882b0b6ee214a530c018c66e7661de0f40161665783875e5",
+        "size_bytes": 21989406,
+        "last_write_utc": "2026-08-27T06:29:59.484010Z"
+      },
+      "record_counts": {
+        "raw_lines": 22184,
+        "included_records": 6737,
+        "user_messages": 204,
+        "assistant_messages": 703,
+        "tool_calls": 2913,
+        "tool_results": 2913,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 4,
+        "scaffold_messages_skipped": 13,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 358,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a02499-f462-78e2-8304-1d3e5b8cdee1",
+      "kind": "codex",
+      "title": "回顾模型训练历程 (3)",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\21\\rollout-2026-08-21T21-54-24-01a02499-f462-78e2-8304-1d3e5b8cdee1.jsonl",
+          "size_bytes_at_start": 990020296,
+          "last_write_utc_at_start": "2026-08-24T17:02:24.417249Z",
+          "size_bytes_at_end": 990020296,
+          "last_write_utc_at_end": "2026-08-24T17:02:24.417249Z",
+          "sha256": "c436f88d5af7596cc9bbde2bb002551576cde2bbe1216ae99a21e5de3a7a1192",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02499-f462-78e2-8304-1d3e5b8cdee1.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02499-f462-78e2-8304-1d3e5b8cdee1.md",
+        "sha256": "3316da79e63a16131d235e01d39509864a3e189fb9408dde69e4bdce9e4f3f65",
+        "size_bytes": 39634783,
+        "last_write_utc": "2026-08-27T06:30:04.769735Z"
+      },
+      "record_counts": {
+        "raw_lines": 43056,
+        "included_records": 13765,
+        "user_messages": 329,
+        "assistant_messages": 1337,
+        "tool_calls": 6046,
+        "tool_results": 6046,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 7,
+        "scaffold_messages_skipped": 25,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 676,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a0365d-2aa6-7c01-bf0f-48e1249179ea",
+      "kind": "codex",
+      "title": "继承对话工作",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\25\\rollout-2026-08-25T08-41-10-01a0365d-2aa6-7c01-bf0f-48e1249179ea.jsonl",
+          "size_bytes_at_start": 1389619,
+          "last_write_utc_at_start": "2026-08-25T00:41:20.514555Z",
+          "size_bytes_at_end": 1389619,
+          "last_write_utc_at_end": "2026-08-25T00:41:20.514555Z",
+          "sha256": "f92835f96aec7b8068edcb2fcd5b0ef869af53b3a3a793ccbd6339096191b5e3",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0365d-2aa6-7c01-bf0f-48e1249179ea.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0365d-2aa6-7c01-bf0f-48e1249179ea.md",
+        "sha256": "e6f4722a89f391a52541e12eec0455e3a8fbf198797d6039c7e4aacc5dec8671",
+        "size_bytes": 339432,
+        "last_write_utc": "2026-08-27T06:30:04.819129Z"
+      },
+      "record_counts": {
+        "raw_lines": 144,
+        "included_records": 42,
+        "user_messages": 3,
+        "assistant_messages": 9,
+        "tool_calls": 15,
+        "tool_results": 15,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 0,
+        "scaffold_messages_skipped": 2,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 6,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a03bcd-9f75-7311-9db6-d63090454951",
+      "kind": "codex",
+      "title": "查看继承训练对话",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\26\\rollout-2026-08-26T10-02-06-01a03bcd-9f75-7311-9db6-d63090454951.jsonl",
+          "size_bytes_at_start": 4819960,
+          "last_write_utc_at_start": "2026-08-26T02:02:21.218595Z",
+          "size_bytes_at_end": 4819960,
+          "last_write_utc_at_end": "2026-08-26T02:02:21.218595Z",
+          "sha256": "999fee6766ba03c0af19e1b87eeab7a1cda5e92aab47698daa72192c3ffd57db",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03bcd-9f75-7311-9db6-d63090454951.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03bcd-9f75-7311-9db6-d63090454951.md",
+        "sha256": "8485cbf94d7e7ae22e134e1aa054f85a6bac0a7bd59486674b0f03d2e2799faf",
+        "size_bytes": 1053301,
+        "last_write_utc": "2026-08-27T06:30:04.858377Z"
+      },
+      "record_counts": {
+        "raw_lines": 536,
+        "included_records": 148,
+        "user_messages": 5,
+        "assistant_messages": 17,
+        "tool_calls": 59,
+        "tool_results": 59,
+        "command_executions": 4,
+        "file_changes": 4,
+        "plans": 0,
+        "scaffold_messages_skipped": 3,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 11,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a03ca4-3d50-7070-8f26-0b50b3ae3860",
+      "kind": "codex",
+      "title": "查看继承训练新增结论",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\26\\rollout-2026-08-26T13-56-31-01a03ca4-3d50-7070-8f26-0b50b3ae3860.jsonl",
+          "size_bytes_at_start": 11615375,
+          "last_write_utc_at_start": "2026-08-27T01:23:18.232371Z",
+          "size_bytes_at_end": 11615375,
+          "last_write_utc_at_end": "2026-08-27T01:23:18.232371Z",
+          "sha256": "abb4888d5d2993a6f5b4a30014b6984b84ebb4f943e256a49a08ac8b02017460",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03ca4-3d50-7070-8f26-0b50b3ae3860.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03ca4-3d50-7070-8f26-0b50b3ae3860.md",
+        "sha256": "42cc846adca7d4e334e193487d2a409690c95574334a7366b2132d2635970ad0",
+        "size_bytes": 4203885,
+        "last_write_utc": "2026-08-27T06:30:04.991941Z"
+      },
+      "record_counts": {
+        "raw_lines": 3832,
+        "included_records": 1459,
+        "user_messages": 26,
+        "assistant_messages": 110,
+        "tool_calls": 538,
+        "tool_results": 537,
+        "command_executions": 236,
+        "file_changes": 12,
+        "plans": 0,
+        "scaffold_messages_skipped": 4,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 51,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a03c9c-e1b6-74e1-a5ed-3ab1f10f543b",
+      "kind": "codex",
+      "title": "研究更大更高质量训练集",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\26\\rollout-2026-08-26T13-48-29-01a03c9c-e1b6-74e1-a5ed-3ab1f10f543b.jsonl",
+          "size_bytes_at_start": 34426630,
+          "last_write_utc_at_start": "2026-08-27T03:24:40.402258Z",
+          "size_bytes_at_end": 34426630,
+          "last_write_utc_at_end": "2026-08-27T03:24:40.402258Z",
+          "sha256": "3f6f03fe88355f90e602db838856cc12eb5de1e906512e9f00974a9051f55d74",
+          "changed_during_read": false
+        },
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\27\\rollout-2026-08-27T11-24-51-01a03c9c-e1b6-74e1-a5ed-3ab1f10f543b_01a0413f-be11-7cf2-8745-fbc83ec9bd81.jsonl",
+          "size_bytes_at_start": 4430205,
+          "last_write_utc_at_start": "2026-08-27T04:24:42.680518Z",
+          "size_bytes_at_end": 4430205,
+          "last_write_utc_at_end": "2026-08-27T04:24:42.680518Z",
+          "sha256": "74f287a4eb30650c8aa7899847fb057ddeca98097d4bf6f1fefb9a80e29c4635",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03c9c-e1b6-74e1-a5ed-3ab1f10f543b.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03c9c-e1b6-74e1-a5ed-3ab1f10f543b.md",
+        "sha256": "973275d2f28c920eb6aa120636f0141de32cde6f7ef32f8edd947ce0dfa8d731",
+        "size_bytes": 11605641,
+        "last_write_utc": "2026-08-27T06:30:05.349766Z"
+      },
+      "record_counts": {
+        "raw_lines": 9999,
+        "included_records": 3595,
+        "user_messages": 79,
+        "assistant_messages": 266,
+        "tool_calls": 1345,
+        "tool_results": 1345,
+        "command_executions": 489,
+        "file_changes": 68,
+        "plans": 3,
+        "scaffold_messages_skipped": 8,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 167,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a03cac-d168-73d3-8dcf-f3fde9087b0f",
+      "kind": "codex",
+      "title": "SVS服务器成果本地化与对齐",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\26\\rollout-2026-08-26T14-05-54-01a03cac-d168-73d3-8dcf-f3fde9087b0f.jsonl",
+          "size_bytes_at_start": 71048847,
+          "last_write_utc_at_start": "2026-08-27T03:18:35.730573Z",
+          "size_bytes_at_end": 71048847,
+          "last_write_utc_at_end": "2026-08-27T03:18:35.730573Z",
+          "sha256": "1a849cd510ab40427de1580a9b1ec3425eb2c3d6bb266e05d9801f13b4dd4cad",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03cac-d168-73d3-8dcf-f3fde9087b0f.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03cac-d168-73d3-8dcf-f3fde9087b0f.md",
+        "sha256": "c54555666279ebd91fac451d54adc581007fb45a2adcfce7961b9c0a46159d91",
+        "size_bytes": 13613566,
+        "last_write_utc": "2026-08-27T06:30:05.800408Z"
+      },
+      "record_counts": {
+        "raw_lines": 5719,
+        "included_records": 2126,
+        "user_messages": 66,
+        "assistant_messages": 187,
+        "tool_calls": 716,
+        "tool_results": 716,
+        "command_executions": 433,
+        "file_changes": 8,
+        "plans": 0,
+        "scaffold_messages_skipped": 6,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 116,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a0041e-7cd4-7790-b4b9-5d90fa742413",
+      "kind": "codex",
+      "title": "生成40轮模型翻唱",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\15\\rollout-2026-08-15T14-31-42-01a0041e-7cd4-7790-b4b9-5d90fa742413.jsonl",
+          "size_bytes_at_start": 12908556,
+          "last_write_utc_at_start": "2026-08-26T11:34:34.985111Z",
+          "size_bytes_at_end": 12908556,
+          "last_write_utc_at_end": "2026-08-26T11:34:34.985111Z",
+          "sha256": "e273867a6e138c1bba385cc9775fd0df9c49680f6ac2503c8184a323be2ea64a",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0041e-7cd4-7790-b4b9-5d90fa742413.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0041e-7cd4-7790-b4b9-5d90fa742413.md",
+        "sha256": "19511f50852ab1925954e9eaafd915ae39cb531ab253b3d13d9251d67bb9b1bd",
+        "size_bytes": 3306728,
+        "last_write_utc": "2026-08-27T06:30:05.938919Z"
+      },
+      "record_counts": {
+        "raw_lines": 4464,
+        "included_records": 1389,
+        "user_messages": 49,
+        "assistant_messages": 214,
+        "tool_calls": 563,
+        "tool_results": 563,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 0,
+        "scaffold_messages_skipped": 8,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 80,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a03de6-8807-71d0-add7-fee9df860bf0",
+      "kind": "codex",
+      "title": "生成40轮模型翻唱 (2)",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\26\\rollout-2026-08-26T19-48-33-01a03de6-8807-71d0-add7-fee9df860bf0.jsonl",
+          "size_bytes_at_start": 22999794,
+          "last_write_utc_at_start": "2026-08-27T02:13:15.662607Z",
+          "size_bytes_at_end": 22999794,
+          "last_write_utc_at_end": "2026-08-27T02:13:15.662607Z",
+          "sha256": "b523f3f222941e96b5fe53627026a563b14c4631d01599132a68fd7e1f1ac865",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03de6-8807-71d0-add7-fee9df860bf0.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03de6-8807-71d0-add7-fee9df860bf0.md",
+        "sha256": "61f985fd697c4993267f6c8a77006eb0c8ed84f52a8206eddfb11943411fc469",
+        "size_bytes": 5703546,
+        "last_write_utc": "2026-08-27T06:30:06.140808Z"
+      },
+      "record_counts": {
+        "raw_lines": 7413,
+        "included_records": 2242,
+        "user_messages": 71,
+        "assistant_messages": 372,
+        "tool_calls": 899,
+        "tool_results": 899,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 1,
+        "scaffold_messages_skipped": 12,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 126,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a00540-6777-7113-8874-8baf479c0482",
+      "kind": "codex",
+      "title": "继续训练 RVC 模型",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\15\\rollout-2026-08-15T19-48-22-01a00540-6777-7113-8874-8baf479c0482.jsonl",
+          "size_bytes_at_start": 46196181,
+          "last_write_utc_at_start": "2026-08-21T17:15:06.341617Z",
+          "size_bytes_at_end": 46196181,
+          "last_write_utc_at_end": "2026-08-21T17:15:06.341617Z",
+          "sha256": "eca9a7a5399bc5530e6cdf95ac8f48397d7a0897722c43a059d38ebd09d2e768",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00540-6777-7113-8874-8baf479c0482.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00540-6777-7113-8874-8baf479c0482.md",
+        "sha256": "e18f8c7d656623ccba8e0a5562b6126901826ac00ed6a397a37bd4443e9358e6",
+        "size_bytes": 3039043,
+        "last_write_utc": "2026-08-27T06:30:06.405846Z"
+      },
+      "record_counts": {
+        "raw_lines": 4754,
+        "included_records": 1206,
+        "user_messages": 111,
+        "assistant_messages": 207,
+        "tool_calls": 444,
+        "tool_results": 444,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 0,
+        "scaffold_messages_skipped": 9,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 130,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a00332-f82e-7983-a92c-4b3d0a6dc16a",
+      "kind": "codex",
+      "title": "云端翻唱",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\15\\rollout-2026-08-15T10-14-27-01a00332-f82e-7983-a92c-4b3d0a6dc16a.jsonl",
+          "size_bytes_at_start": 263940719,
+          "last_write_utc_at_start": "2026-08-15T05:25:42.970755Z",
+          "size_bytes_at_end": 263940719,
+          "last_write_utc_at_end": "2026-08-15T05:25:42.970755Z",
+          "sha256": "dd2ab8ba2fa8cf1ed94e76c183ad08b5f2b24461ff1f551c639299942699d132",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00332-f82e-7983-a92c-4b3d0a6dc16a.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00332-f82e-7983-a92c-4b3d0a6dc16a.md",
+        "sha256": "dc6452b9e702689f1ab0228b0dc18fe8cd6018e0d8badfc78ba5b8c0f7676eeb",
+        "size_bytes": 18987128,
+        "last_write_utc": "2026-08-27T06:30:07.903189Z"
+      },
+      "record_counts": {
+        "raw_lines": 28165,
+        "included_records": 9156,
+        "user_messages": 320,
+        "assistant_messages": 1111,
+        "tool_calls": 3855,
+        "tool_results": 3854,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 16,
+        "scaffold_messages_skipped": 18,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 506,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a00048-622f-7983-9c87-68583b12e2ef",
+      "kind": "codex",
+      "title": "云服务器训练",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\14\\rollout-2026-08-14T20-38-58-01a00048-622f-7983-9c87-68583b12e2ef.jsonl",
+          "size_bytes_at_start": 212148247,
+          "last_write_utc_at_start": "2026-08-15T06:50:49.252688Z",
+          "size_bytes_at_end": 212148247,
+          "last_write_utc_at_end": "2026-08-15T06:50:49.252688Z",
+          "sha256": "9b2f89d287fca01af54157920b3c3d2fc57813b8fe4a10daf8c11d676127a34e",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00048-622f-7983-9c87-68583b12e2ef.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00048-622f-7983-9c87-68583b12e2ef.md",
+        "sha256": "2b70f61a73587f290f5f1a5d49fbb391695ba0d9c2c660766e5a342fe7f374fe",
+        "size_bytes": 19147426,
+        "last_write_utc": "2026-08-27T06:30:09.167556Z"
+      },
+      "record_counts": {
+        "raw_lines": 28647,
+        "included_records": 9728,
+        "user_messages": 266,
+        "assistant_messages": 1095,
+        "tool_calls": 4170,
+        "tool_results": 4181,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 16,
+        "scaffold_messages_skipped": 16,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 453,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a00009-0ebf-7fe2-89ce-30028a9eaee9",
+      "kind": "codex",
+      "title": "云端 GPU 训练可行性排查（标题由首轮消息推断）",
+      "title_source": "inferred_from_first_user_message",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\14\\rollout-2026-08-14T19-29-48-01a00009-0ebf-7fe2-89ce-30028a9eaee9.jsonl",
+          "size_bytes_at_start": 39097771,
+          "last_write_utc_at_start": "2026-08-15T02:23:53.730092Z",
+          "size_bytes_at_end": 39097771,
+          "last_write_utc_at_end": "2026-08-15T02:23:53.730092Z",
+          "sha256": "51f96c3305e3dbf655d3f3c8058423ee4f625af18f318a99ab3e03fe6de3bae7",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00009-0ebf-7fe2-89ce-30028a9eaee9.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00009-0ebf-7fe2-89ce-30028a9eaee9.md",
+        "sha256": "3c5b610b8f3ca5bbcd9a83c0d13c8ed245d91c476b1d61df0c7f04361a07cd79",
+        "size_bytes": 883277,
+        "last_write_utc": "2026-08-27T06:30:09.351546Z"
+      },
+      "record_counts": {
+        "raw_lines": 1052,
+        "included_records": 199,
+        "user_messages": 40,
+        "assistant_messages": 57,
+        "tool_calls": 51,
+        "tool_results": 51,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 0,
+        "scaffold_messages_skipped": 4,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 50,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a01f07-fdca-7c33-9098-8bccb66724e5",
+      "kind": "codex",
+      "title": "云端训练前置",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\20\\rollout-2026-08-20T19-56-52-01a01f07-fdca-7c33-9098-8bccb66724e5.jsonl",
+          "size_bytes_at_start": 25105220,
+          "last_write_utc_at_start": "2026-08-20T12:47:21.347906Z",
+          "size_bytes_at_end": 25105220,
+          "last_write_utc_at_end": "2026-08-20T12:47:21.347906Z",
+          "sha256": "65e594c4721680884aad09c62fe1bb1d46d535190381887b5f3a8ca5dc71de5e",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a01f07-fdca-7c33-9098-8bccb66724e5.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a01f07-fdca-7c33-9098-8bccb66724e5.md",
+        "sha256": "a9df55d93d90fb409d4e5d77d4dc932dd8de3ecce13d21b603fda543bea54e58",
+        "size_bytes": 7665294,
+        "last_write_utc": "2026-08-27T06:30:09.568375Z"
+      },
+      "record_counts": {
+        "raw_lines": 7113,
+        "included_records": 2245,
+        "user_messages": 57,
+        "assistant_messages": 233,
+        "tool_calls": 977,
+        "tool_results": 977,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 1,
+        "scaffold_messages_skipped": 9,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 103,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a0035b-2f4d-7532-9c14-d3a29e1bf9b1",
+      "kind": "codex",
+      "title": "分析音乐源分离训练GUI项目",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\15\\rollout-2026-08-15T10-58-22-01a0035b-2f4d-7532-9c14-d3a29e1bf9b1.jsonl",
+          "size_bytes_at_start": 5227265,
+          "last_write_utc_at_start": "2026-08-15T04:53:15.558235Z",
+          "size_bytes_at_end": 5227265,
+          "last_write_utc_at_end": "2026-08-15T04:53:15.558235Z",
+          "sha256": "3040aba1f17e0f8212a18e6a18b5d7f61c0374b55e3e787f584913bcfa3889ab",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0035b-2f4d-7532-9c14-d3a29e1bf9b1.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0035b-2f4d-7532-9c14-d3a29e1bf9b1.md",
+        "sha256": "decf398cb5dd170bf54fd73122a3ca6b4af56d4d167bd49af129c02dc180d0ed",
+        "size_bytes": 1614694,
+        "last_write_utc": "2026-08-27T06:30:09.635839Z"
+      },
+      "record_counts": {
+        "raw_lines": 1501,
+        "included_records": 521,
+        "user_messages": 10,
+        "assistant_messages": 66,
+        "tool_calls": 223,
+        "tool_results": 222,
+        "command_executions": 0,
+        "file_changes": 0,
+        "plans": 0,
+        "scaffold_messages_skipped": 2,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 18,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a026cf-6d2a-7fe1-9b6a-aec20bb2c126",
+      "kind": "codex",
+      "title": "分析 so-vits-svc 项目参考价值",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\22\\rollout-2026-08-22T08-12-03-01a026cf-6d2a-7fe1-9b6a-aec20bb2c126.jsonl",
+          "size_bytes_at_start": 4390361,
+          "last_write_utc_at_start": "2026-08-22T00:12:14.734142Z",
+          "size_bytes_at_end": 4390361,
+          "last_write_utc_at_end": "2026-08-22T00:12:14.734142Z",
+          "sha256": "092dcf5cb465ccbb871b117cfc66688f87f2e078ed9fca2ca10a2c6ff9ce4ae6",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a026cf-6d2a-7fe1-9b6a-aec20bb2c126.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a026cf-6d2a-7fe1-9b6a-aec20bb2c126.md",
+        "sha256": "0befdee677021550b96a1d3e06b8d65df3dc53f5b69f40247da08991d5cb5fa1",
+        "size_bytes": 1763011,
+        "last_write_utc": "2026-08-27T06:30:09.681026Z"
+      },
+      "record_counts": {
+        "raw_lines": 724,
+        "included_records": 197,
+        "user_messages": 11,
+        "assistant_messages": 19,
+        "tool_calls": 78,
+        "tool_results": 78,
+        "command_executions": 11,
+        "file_changes": 0,
+        "plans": 0,
+        "scaffold_messages_skipped": 2,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 18,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a02711-5260-75c0-bce8-b6abad73f471",
+      "kind": "codex",
+      "title": "分析 so-vits-svc 项目参考价值 (2)",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\22\\rollout-2026-08-22T09-24-01-01a02711-5260-75c0-bce8-b6abad73f471.jsonl",
+          "size_bytes_at_start": 44882925,
+          "last_write_utc_at_start": "2026-08-22T01:24:01.996715Z",
+          "size_bytes_at_end": 44882925,
+          "last_write_utc_at_end": "2026-08-22T01:24:01.996715Z",
+          "sha256": "2b4813fd224a57f70974c38d104d810475fc60dfc130d104f01920997c94a9fb",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02711-5260-75c0-bce8-b6abad73f471.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02711-5260-75c0-bce8-b6abad73f471.md",
+        "sha256": "cec4d37655745749d74d53325b2df82b01e9bb999be080a9525f8c97940df902",
+        "size_bytes": 2331029,
+        "last_write_utc": "2026-08-27T06:30:09.903663Z"
+      },
+      "record_counts": {
+        "raw_lines": 2339,
+        "included_records": 582,
+        "user_messages": 67,
+        "assistant_messages": 112,
+        "tool_calls": 177,
+        "tool_results": 177,
+        "command_executions": 35,
+        "file_changes": 13,
+        "plans": 1,
+        "scaffold_messages_skipped": 4,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 88,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a037eb-22d1-7b33-bbad-6bbded790ff4",
+      "kind": "codex",
+      "title": "梳理 Haruka 日语歌唱模型路线",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\25\\rollout-2026-08-25T15-55-51-01a037eb-22d1-7b33-bbad-6bbded790ff4.jsonl",
+          "size_bytes_at_start": 409581,
+          "last_write_utc_at_start": "2026-08-25T07:55:53.106961Z",
+          "size_bytes_at_end": 409581,
+          "last_write_utc_at_end": "2026-08-25T07:55:53.106961Z",
+          "sha256": "9064af7bc7ff47900504b2b853f051b2b9a4f6b3c8dc0317ca164fbe0a652110",
+          "changed_during_read": false
+        },
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\25\\rollout-2026-08-25T16-01-10-01a037eb-22d1-7b33-bbad-6bbded790ff4_01a037f0-0105-7ef3-a716-1e5279c94643.jsonl",
+          "size_bytes_at_start": 81761,
+          "last_write_utc_at_start": "2026-08-25T08:01:16.718530Z",
+          "size_bytes_at_end": 81761,
+          "last_write_utc_at_end": "2026-08-25T08:01:16.718530Z",
+          "sha256": "fd90b37b7ce9829b235cef00a8069b5b6fe98956ee3d482ad2da8887c565d679",
+          "changed_during_read": false
+        },
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\25\\rollout-2026-08-25T16-01-19-01a037eb-22d1-7b33-bbad-6bbded790ff4_01a037f0-2304-78d0-8d5f-63cc5f8d2c51.jsonl",
+          "size_bytes_at_start": 3353271,
+          "last_write_utc_at_start": "2026-08-25T09:08:52.329175Z",
+          "size_bytes_at_end": 3353271,
+          "last_write_utc_at_end": "2026-08-25T09:08:52.329175Z",
+          "sha256": "ddfcd88afe389f1f2d9e4e5ac069c2e04be355ee18149bd98814638204300aca",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a037eb-22d1-7b33-bbad-6bbded790ff4.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a037eb-22d1-7b33-bbad-6bbded790ff4.md",
+        "sha256": "bd5cb4215fded093e3a7840ce64a5861973889a54b47a01b7d32f22c7ad90b6c",
+        "size_bytes": 1309122,
+        "last_write_utc": "2026-08-27T06:30:09.948142Z"
+      },
+      "record_counts": {
+        "raw_lines": 1062,
+        "included_records": 378,
+        "user_messages": 15,
+        "assistant_messages": 31,
+        "tool_calls": 136,
+        "tool_results": 136,
+        "command_executions": 40,
+        "file_changes": 19,
+        "plans": 1,
+        "scaffold_messages_skipped": 2,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 31,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a02735-808c-7a30-99d0-12367d59e8e7",
+      "kind": "codex",
+      "title": "研究 Synthesizer V Studio 使用方法",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\22\\rollout-2026-08-22T10-03-33-01a02735-808c-7a30-99d0-12367d59e8e7.jsonl",
+          "size_bytes_at_start": 5612103,
+          "last_write_utc_at_start": "2026-08-22T02:04:28.839307Z",
+          "size_bytes_at_end": 5612103,
+          "last_write_utc_at_end": "2026-08-22T02:04:28.839307Z",
+          "sha256": "b40bb694bb1ab5edfc4b57428e5902ad27f9074a06b09d2801f022aee7207f61",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02735-808c-7a30-99d0-12367d59e8e7.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02735-808c-7a30-99d0-12367d59e8e7.md",
+        "sha256": "0beb26b8f00300bf6a67ce4426de4ab81fd9971249828ae43b4b820ef5fe4705",
+        "size_bytes": 1603394,
+        "last_write_utc": "2026-08-27T06:30:10.000515Z"
+      },
+      "record_counts": {
+        "raw_lines": 1152,
+        "included_records": 378,
+        "user_messages": 13,
+        "assistant_messages": 36,
+        "tool_calls": 134,
+        "tool_results": 134,
+        "command_executions": 60,
+        "file_changes": 1,
+        "plans": 0,
+        "scaffold_messages_skipped": 2,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 21,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a040c0-bfa3-7683-a65c-a32c125eaac4",
+      "kind": "codex",
+      "title": "查看 Vocal2Midi 软件",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\27\\rollout-2026-08-27T09-06-09-01a040c0-bfa3-7683-a65c-a32c125eaac4.jsonl",
+          "size_bytes_at_start": 115157,
+          "last_write_utc_at_start": "2026-08-27T01:06:15.063699Z",
+          "size_bytes_at_end": 115157,
+          "last_write_utc_at_end": "2026-08-27T01:06:15.063699Z",
+          "sha256": "014b1897f2e98d0a50102ef0b3e85f71bbd8a31e64383b4e7c546c40843518b7",
+          "changed_during_read": false
+        },
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\27\\rollout-2026-08-27T09-06-32-01a040c0-bfa3-7683-a65c-a32c125eaac4_01a040c1-1aa9-7731-9066-efe86d51781b.jsonl",
+          "size_bytes_at_start": 13987578,
+          "last_write_utc_at_start": "2026-08-27T04:29:40.257244Z",
+          "size_bytes_at_end": 13987578,
+          "last_write_utc_at_end": "2026-08-27T04:29:40.257244Z",
+          "sha256": "d22aa94b2d3b2a937e245c8fb8a5b7adcdd9682163001fa4b8016493f71f1b8e",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a040c0-bfa3-7683-a65c-a32c125eaac4.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a040c0-bfa3-7683-a65c-a32c125eaac4.md",
+        "sha256": "58611f4f3ac111ce63497d56ff8901cc647ef9effe68fa5ea20e8d3b937a1990",
+        "size_bytes": 5480802,
+        "last_write_utc": "2026-08-27T06:30:10.137634Z"
+      },
+      "record_counts": {
+        "raw_lines": 3620,
+        "included_records": 1340,
+        "user_messages": 14,
+        "assistant_messages": 118,
+        "tool_calls": 504,
+        "tool_results": 504,
+        "command_executions": 166,
+        "file_changes": 33,
+        "plans": 1,
+        "scaffold_messages_skipped": 3,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 40,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    },
+    {
+      "thread_id": "01a03dd9-f1c5-7851-9b1d-f1ad06667f5d",
+      "kind": "codex",
+      "title": "规划语音内容迁移",
+      "title_source": "codex_app",
+      "source_project_id": "local-71d9095e20dc47ab9e085d0be518ce96",
+      "source_cwd": "C:\\Users\\34618\\Documents\\novelm@ster",
+      "raw_session_files": [
+        {
+          "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\26\\rollout-2026-08-26T19-34-48-01a03dd9-f1c5-7851-9b1d-f1ad06667f5d.jsonl",
+          "size_bytes_at_start": 25884195,
+          "last_write_utc_at_start": "2026-08-27T06:29:53.339797Z",
+          "size_bytes_at_end": 25884195,
+          "last_write_utc_at_end": "2026-08-27T06:29:53.339797Z",
+          "sha256": "a9b688c4aeacd7ae62c73f4a40cef42e0006fdec000079a6a810192b8f8d2dea",
+          "changed_during_read": false
+        }
+      ],
+      "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03dd9-f1c5-7851-9b1d-f1ad06667f5d.md",
+      "archive_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03dd9-f1c5-7851-9b1d-f1ad06667f5d.md",
+        "sha256": "24697df69db06ec9718b1f64eeebcb5da4ccab7e4cc4e7e2e6deb944fe1275a5",
+        "size_bytes": 10500631,
+        "last_write_utc": "2026-08-27T06:30:10.362017Z"
+      },
+      "record_counts": {
+        "raw_lines": 2671,
+        "included_records": 1060,
+        "user_messages": 9,
+        "assistant_messages": 40,
+        "tool_calls": 391,
+        "tool_results": 390,
+        "command_executions": 218,
+        "file_changes": 10,
+        "plans": 2,
+        "scaffold_messages_skipped": 2,
+        "empty_messages_skipped": 0,
+        "platform_records_skipped": 44,
+        "parse_errors": 0,
+        "source_open_errors": 0
+      },
+      "status": "archived_complete",
+      "native_move_available": false,
+      "note": "目标仓库尚未出现在 Codex 项目列表，当前使用完整本地 Markdown 归档；待项目注册 API 可用时可按 thread_id 原生移动。"
+    }
+  ]
+}
