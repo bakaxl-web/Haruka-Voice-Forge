@@ -1,0 +1,802 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-27T05:58:03.5965367Z",
+  "target_repository": "D:\\语音模型\\Haruka-Voice-Forge",
+  "target_branch": "codex/migrate-vocal2midi-20260827",
+  "base_commit": "153d73f2a6c8783bdf8338568bf7eb489b179324",
+  "source_repository": "C:\\Users\\34618\\Documents\\novelm@ster",
+  "source_git_branch": "codex/haruka-svc-data",
+  "source_git_head": null,
+  "source_git_note": "旧项目当前无提交历史；源码来源以逐文件 SHA-256、大小和时间证明",
+  "scope": "Haruka voice subsystem source/config/tests/docs only; external runtimes/models/datasets remain in place",
+  "rows": [
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\analyze_lyrics_emotion.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\analyze_lyrics_emotion.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\analyze_lyrics_emotion.py",
+        "sha256": "b77d9cdb412b3b219b69f9b3da2a5667861fd1463e279755cd81db136facea69",
+        "size_bytes": 19749,
+        "last_write_utc": "2026-08-26T12:23:49.2288909Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\analyze_lyrics_emotion.py",
+        "sha256": "2f48c1ee83853d977b5a23e50aa963bbeff53bda676b1eadc86a35144bd1cb5b",
+        "size_bytes": 19800,
+        "last_write_utc": "2026-08-27T04:53:56.1849581Z"
+      },
+      "action": "semantic_merge_source_hints_keep_target_cache_policy",
+      "include_in_git": true,
+      "notes": "合入情绪语义提示与标点逻辑，保留目标仓库通用默认分组和路径安全策略"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\run_rvc_aligned.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\run_rvc_aligned.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\run_rvc_aligned.py",
+        "sha256": "79ad71499d0da9446ae0fcca45f956fd4e0e0058ea5b1c66a0932e7708cced16",
+        "size_bytes": 12744,
+        "last_write_utc": "2026-08-26T07:30:26.7093542Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\run_rvc_aligned.py",
+        "sha256": "139280288fc8cf7e3edadc660898789b378cfb8ae61accea4da45528b00190d0",
+        "size_bytes": 13975,
+        "last_write_utc": "2026-08-26T16:25:56.3253074Z"
+      },
+      "action": "retained_target_runtime_policy",
+      "include_in_git": true,
+      "notes": "目标版本保留延迟 RVC runtime、环境变量覆盖和路径隔离；旧版硬编码路径未覆盖"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\run_segmented_rvc.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\run_segmented_rvc.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\run_segmented_rvc.py",
+        "sha256": "4112b2b9b73a31a1de2813b72a6571935492430c1653f16e4bf9508ca8219ec2",
+        "size_bytes": 16386,
+        "last_write_utc": "2026-08-26T15:02:05.6075015Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\run_segmented_rvc.py",
+        "sha256": "86b0f42eb441441904791fec76ee2c815a3c3b95a21ac4f5c6ef9b3f40c0bdb0",
+        "size_bytes": 16508,
+        "last_write_utc": "2026-08-26T16:25:56.3273172Z"
+      },
+      "action": "retained_target_runtime_policy",
+      "include_in_git": true,
+      "notes": "目标版本保留延迟 RVC runtime、可配置情绪段和路径隔离；旧版硬编码默认未覆盖"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\test_analyze_lyrics_emotion.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_analyze_lyrics_emotion.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\test_analyze_lyrics_emotion.py",
+        "sha256": "4704fbe644b71f14843f04322f67e2ab9d0eadf28f1fc14b62b6f2ea2dbcabc1",
+        "size_bytes": 2107,
+        "last_write_utc": "2026-08-26T12:23:49.2299360Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_analyze_lyrics_emotion.py",
+        "sha256": "84c67f6edac6b67a37120c04fbf3259c6261752c50af5bcb4944fd0a5479da30",
+        "size_bytes": 3192,
+        "last_write_utc": "2026-08-26T16:25:56.3293150Z"
+      },
+      "action": "retained_target_test_policy",
+      "include_in_git": true,
+      "notes": "目标测试保留通用默认分组与无绝对旧路径断言"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\smooth_emotion_boundaries.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\smooth_emotion_boundaries.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\smooth_emotion_boundaries.py",
+        "sha256": "e1895e96b80f2800c433d3d9ed1f77e7777cf70e267de1038b076304fb95628f",
+        "size_bytes": 6799,
+        "last_write_utc": "2026-08-26T13:07:17.2210209Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\smooth_emotion_boundaries.py",
+        "sha256": "e1895e96b80f2800c433d3d9ed1f77e7777cf70e267de1038b076304fb95628f",
+        "size_bytes": 6799,
+        "last_write_utc": "2026-08-26T16:25:56.3283156Z"
+      },
+      "action": "same_content",
+      "include_in_git": true,
+      "notes": "内容相同"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\ehan_moyou_natural_segments.json",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\ehan_moyou_natural_segments.json",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\ehan_moyou_natural_segments.json",
+        "sha256": "7ec71f6a88e7caec4a76895e4b64882ee7ead14132cca4f09c28287c46c96f1f",
+        "size_bytes": 1321,
+        "last_write_utc": "2026-08-26T08:48:07.3937421Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\ehan_moyou_natural_segments.json",
+        "sha256": "7ec71f6a88e7caec4a76895e4b64882ee7ead14132cca4f09c28287c46c96f1f",
+        "size_bytes": 1321,
+        "last_write_utc": "2026-08-26T08:48:07.3937421Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "自然分段证据"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\emotion_segments_shishamo_nakaniwa_20260826.json",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\emotion_segments_shishamo_nakaniwa_20260826.json",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\emotion_segments_shishamo_nakaniwa_20260826.json",
+        "sha256": "9c197520feaaa5e383bab35f93137beca075ced4996ac7f5baf9893e873d0018",
+        "size_bytes": 1762,
+        "last_write_utc": "2026-08-26T09:21:21.4597328Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\emotion_segments_shishamo_nakaniwa_20260826.json",
+        "sha256": "9c197520feaaa5e383bab35f93137beca075ced4996ac7f5baf9893e873d0018",
+        "size_bytes": 1762,
+        "last_write_utc": "2026-08-26T09:21:21.4597328Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "情绪分段证据"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\kuusou_forest_natural_segments.json",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\kuusou_forest_natural_segments.json",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\kuusou_forest_natural_segments.json",
+        "sha256": "0b1a65201df4e82623f5297666cc000d81b3ee453b1d53b3906602c9ee85ae99",
+        "size_bytes": 1935,
+        "last_write_utc": "2026-08-26T08:24:34.9679627Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\kuusou_forest_natural_segments.json",
+        "sha256": "0b1a65201df4e82623f5297666cc000d81b3ee453b1d53b3906602c9ee85ae99",
+        "size_bytes": 1935,
+        "last_write_utc": "2026-08-26T08:24:34.9679627Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "自然分段证据"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\shishamo_nakaniwa_segments.json",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\shishamo_nakaniwa_segments.json",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\shishamo_nakaniwa_segments.json",
+        "sha256": "9e52644cb2979f9e5bd1ddcb24e7b342cceb52493f64da8a8c07005ad0a583b9",
+        "size_bytes": 869,
+        "last_write_utc": "2026-08-26T07:50:40.8228657Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\shishamo_nakaniwa_segments.json",
+        "sha256": "9e52644cb2979f9e5bd1ddcb24e7b342cceb52493f64da8a8c07005ad0a583b9",
+        "size_bytes": 869,
+        "last_write_utc": "2026-08-26T07:50:40.8228657Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "分段证据"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\vocal2midi.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\vocal2midi.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\vocal2midi.py",
+        "sha256": "91a64e823a5f474bb98558175d829156345a9ec9ae7219ab5ff464b745e3e1ca",
+        "size_bytes": 14774,
+        "last_write_utc": "2026-08-27T03:45:04.3544649Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\vocal2midi.py",
+        "sha256": "91a64e823a5f474bb98558175d829156345a9ec9ae7219ab5ff464b745e3e1ca",
+        "size_bytes": 14774,
+        "last_write_utc": "2026-08-27T03:45:04.3544649Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "Vocal2Midi 外部适配器"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\vocal2midi_runner.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\vocal2midi_runner.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\vocal2midi_runner.py",
+        "sha256": "5cc0825da3c70e88252f223f6e7ed5ebb69f4a64ddc61d01bfcea3a055ea14e2",
+        "size_bytes": 3088,
+        "last_write_utc": "2026-08-27T03:45:04.3549779Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\vocal2midi_runner.py",
+        "sha256": "5cc0825da3c70e88252f223f6e7ed5ebb69f4a64ddc61d01bfcea3a055ea14e2",
+        "size_bytes": 3088,
+        "last_write_utc": "2026-08-27T03:45:04.3549779Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "Vocal2Midi 外部运行器，shell=False"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\pipeline.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\pipeline.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\pipeline.py",
+        "sha256": "79b79d29f951db6900f406d1de892a2c1bc26aa91bcc00273faa6eb38a9943de",
+        "size_bytes": 63511,
+        "last_write_utc": "2026-08-27T04:13:30.2897071Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\pipeline.py",
+        "sha256": "79b79d29f951db6900f406d1de892a2c1bc26aa91bcc00273faa6eb38a9943de",
+        "size_bytes": 63511,
+        "last_write_utc": "2026-08-27T04:13:30.2897071Z"
+      },
+      "action": "semantic_merge",
+      "include_in_git": true,
+      "notes": "合入 Vocal2Midi 触发、自动歌词候选、映射审核和 input.ds 物化"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\cli.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\cli.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\cli.py",
+        "sha256": "1701656fb0cd678cb4f5a892f4c83c2c341eb1752a01bc431bb6c09bf262651f",
+        "size_bytes": 31407,
+        "last_write_utc": "2026-08-26T13:50:56.7877981Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\cli.py",
+        "sha256": "1701656fb0cd678cb4f5a892f4c83c2c341eb1752a01bc431bb6c09bf262651f",
+        "size_bytes": 31407,
+        "last_write_utc": "2026-08-26T13:50:56.7877981Z"
+      },
+      "action": "semantic_merge",
+      "include_in_git": true,
+      "notes": "合入扩展训练集命令与现有 CLI"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\dataset_finalize.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\dataset_finalize.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\dataset_finalize.py",
+        "sha256": "7418d547658d0cae0a63b9d0bc6f19e0966800f08cafcf5f8ac01a5da420be1a",
+        "size_bytes": 135170,
+        "last_write_utc": "2026-08-26T14:19:32.6984807Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\dataset_finalize.py",
+        "sha256": "7418d547658d0cae0a63b9d0bc6f19e0966800f08cafcf5f8ac01a5da420be1a",
+        "size_bytes": 135170,
+        "last_write_utc": "2026-08-26T14:19:32.6984807Z"
+      },
+      "action": "copied_additive",
+      "include_in_git": true,
+      "notes": "新增扩展训练集冻结/对齐/QA/打包流程"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\training_dataset.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\training_dataset.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\coverprep\\training_dataset.py",
+        "sha256": "f9753bde13fa87bd927821930c8458a61906ca499d800067d1a2910f806ba4a8",
+        "size_bytes": 129645,
+        "last_write_utc": "2026-08-26T14:22:14.3410178Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\coverprep\\training_dataset.py",
+        "sha256": "f9753bde13fa87bd927821930c8458a61906ca499d800067d1a2910f806ba4a8",
+        "size_bytes": 129645,
+        "last_write_utc": "2026-08-26T14:22:14.3410178Z"
+      },
+      "action": "semantic_merge",
+      "include_in_git": true,
+      "notes": "新增补充歌曲与训练集候选处理，保留目标策略"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_vocal2midi.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_vocal2midi.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_vocal2midi.py",
+        "sha256": "6a93b7967bab8a02bc9ce5889c6c30d43b8a3fce91be473553ff904d74ed8a85",
+        "size_bytes": 16891,
+        "last_write_utc": "2026-08-27T04:24:31.6835673Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_vocal2midi.py",
+        "sha256": "6a93b7967bab8a02bc9ce5889c6c30d43b8a3fce91be473553ff904d74ed8a85",
+        "size_bytes": 16891,
+        "last_write_utc": "2026-08-27T04:24:31.6835673Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "Vocal2Midi 单元测试"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_dataset_finalize.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_dataset_finalize.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_dataset_finalize.py",
+        "sha256": "8272cf9fe991e775b9f6703f6d371d089a13fd721480a24672848085e7bbe653",
+        "size_bytes": 23470,
+        "last_write_utc": "2026-08-26T14:09:45.4616444Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_dataset_finalize.py",
+        "sha256": "8272cf9fe991e775b9f6703f6d371d089a13fd721480a24672848085e7bbe653",
+        "size_bytes": 23470,
+        "last_write_utc": "2026-08-26T14:09:45.4616444Z"
+      },
+      "action": "copied_additive",
+      "include_in_git": true,
+      "notes": "扩展训练集冻结/QA 测试"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_training_dataset.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_training_dataset.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_training_dataset.py",
+        "sha256": "bf5dddb76e214ade32c3307775ab97b6707c1a13263af6ddf8ee64437898a8b5",
+        "size_bytes": 52254,
+        "last_write_utc": "2026-08-26T14:22:29.7460323Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_training_dataset.py",
+        "sha256": "bf5dddb76e214ade32c3307775ab97b6707c1a13263af6ddf8ee64437898a8b5",
+        "size_bytes": 52254,
+        "last_write_utc": "2026-08-26T14:22:29.7460323Z"
+      },
+      "action": "copied_additive",
+      "include_in_git": true,
+      "notes": "补充训练集测试"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\tests\\test_pipeline_index_cache.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_pipeline_index_cache.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\tests\\test_pipeline_index_cache.py",
+        "sha256": "a010dd1232978d11af72662ffdd993e3500425f78bd3664c1fe37d127f79388e",
+        "size_bytes": 1889,
+        "last_write_utc": "2026-08-26T08:40:59.9263232Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_pipeline_index_cache.py",
+        "sha256": "b91b1e8fa3411d78cb176a7d6eef97405a349b82168b1cb9f51f37c2320cc5ff",
+        "size_bytes": 2150,
+        "last_write_utc": "2026-08-27T05:00:54.0574588Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "RVC index 缓存运行时测试"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\tests\\test_rvc_cli_runtime.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_rvc_cli_runtime.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\tests\\test_rvc_cli_runtime.py",
+        "sha256": "266b255ab83cb5e1724beac45d292a2b79950ed62cbcdd5011c9310107b9896b",
+        "size_bytes": 902,
+        "last_write_utc": "2026-08-26T06:50:08.7759755Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_rvc_cli_runtime.py",
+        "sha256": "cc68c45c3d7e681a17d37a94b205605e79a2724eed5aa6a0b329caafc4669b2b",
+        "size_bytes": 1376,
+        "last_write_utc": "2026-08-27T05:01:34.5242207Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "RVC CLI 外部 runtime 测试"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\config\\tools.local.example.yaml",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\config\\tools.local.example.yaml",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\config\\tools.local.example.yaml",
+        "sha256": "0ae1892f1d4a7f29aa589f0bfee8e030f44b87170c44eb94da860026a13c5bf2",
+        "size_bytes": 1595,
+        "last_write_utc": "2026-08-27T03:50:19.5137883Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\config\\tools.local.example.yaml",
+        "sha256": "e9721e7396f96cbc97225672e5420747c9215c70a3673544bed227e6358fbe66",
+        "size_bytes": 1431,
+        "last_write_utc": "2026-08-27T04:53:29.7566225Z"
+      },
+      "action": "semantic_merge",
+      "include_in_git": true,
+      "notes": "增加 Vocal2Midi 外部路径与默认关闭配置"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\templates\\job.example.yaml",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\templates\\job.example.yaml",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\templates\\job.example.yaml",
+        "sha256": "b9b60e4ebefe6ed3a8141645e60dcba16410b71ddf8f185d7b7b7959f49f3d99",
+        "size_bytes": 979,
+        "last_write_utc": "2026-08-27T03:50:19.5163005Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\templates\\job.example.yaml",
+        "sha256": "69a8360ad5fe8c42f609551f1886aca364072a6b0a4b0d0d8bf1b87cfa68e4f9",
+        "size_bytes": 937,
+        "last_write_utc": "2026-08-27T04:53:29.7576223Z"
+      },
+      "action": "semantic_merge",
+      "include_in_git": true,
+      "notes": "增加 job 级 Vocal2Midi 开关示例"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\config\\tools.local.yaml",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\config\\tools.local.yaml",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\config\\tools.local.yaml",
+        "sha256": "c0e98b96a8fdaa901517dd60f7df56a785a82fabefd37597b8d716ebcae8c836",
+        "size_bytes": 2141,
+        "last_write_utc": "2026-08-27T03:50:19.5149653Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\config\\tools.local.yaml",
+        "sha256": "c0e98b96a8fdaa901517dd60f7df56a785a82fabefd37597b8d716ebcae8c836",
+        "size_bytes": 2141,
+        "last_write_utc": "2026-08-27T03:50:19.5149653Z"
+      },
+      "action": "copied_ignored_local_config",
+      "include_in_git": false,
+      "notes": "仅本机忽略配置，不纳入 Git"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\config\\coverprep_v3.defaults.json",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\config\\coverprep_v3.defaults.json",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\config\\coverprep_v3.defaults.json",
+        "sha256": "48de59d532eaff0358b7663793ce9a155131bc1b84f82c6e2380b406cbf8f111",
+        "size_bytes": 866,
+        "last_write_utc": "2026-08-25T08:48:52.1785397Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\config\\coverprep_v3.defaults.json",
+        "sha256": "459e7b9ef6a0d792d1df24788be34c8e2b5c353de8a2e3f9d28c71a44d23d151",
+        "size_bytes": 360,
+        "last_write_utc": "2026-08-26T03:05:13.6139893Z"
+      },
+      "action": "retained_target_policy",
+      "include_in_git": true,
+      "notes": "保留目标仓库占位路径与仓库策略"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\.gitignore",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\.gitignore",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\.gitignore",
+        "sha256": "e4987380b97c50bc7ed9430a3bd4755553b5bc9a57e0fffd10507303e56c494a",
+        "size_bytes": 44,
+        "last_write_utc": "2026-08-25T08:52:47.9708914Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\.gitignore",
+        "sha256": "947432f90fb9066c2c02e6a3a7b7ed80280d45c9cd134a2e669f0e2b38c85bb9",
+        "size_bytes": 710,
+        "last_write_utc": "2026-08-26T02:40:04.3635552Z"
+      },
+      "action": "retained_target_policy",
+      "include_in_git": true,
+      "notes": "保留目标仓库清理规则与资产边界"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\haruka_local_ja_common_v1.yaml",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\haruka_local_ja_common_v1.yaml",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\haruka_local_ja_common_v1.yaml",
+        "sha256": "06ce7086ad73c0760c095d27e2db4bab52b9d041886dbb24554db4342a22bced",
+        "size_bytes": 1602,
+        "last_write_utc": "2026-08-22T00:30:11.3075663Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\haruka_local_ja_common_v1.yaml",
+        "sha256": "24cbd46ad4f61b9c7e9e12521b3e61102705e74504ca35eec3c2d0bcb0bec629",
+        "size_bytes": 1572,
+        "last_write_utc": "2026-08-26T03:05:13.6168248Z"
+      },
+      "action": "retained_target_profile",
+      "include_in_git": true,
+      "notes": "保留目标仓库模型 profile"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\haruka_local_ja_v2.yaml",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\haruka_local_ja_v2.yaml",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\haruka_local_ja_v2.yaml",
+        "sha256": "12082b15fc009d14eabd592dbbc3b1b6bfa3d20bcb13cdc7adfd54b4d0c9ed6f",
+        "size_bytes": 1577,
+        "last_write_utc": "2026-08-21T06:33:59.2568213Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\haruka_local_ja_v2.yaml",
+        "sha256": "6c16f6c75320bd490987a0def156a42c0a25314f25fc57fde0c3f43873c4267c",
+        "size_bytes": 1433,
+        "last_write_utc": "2026-08-26T03:05:13.6188218Z"
+      },
+      "action": "retained_target_profile",
+      "include_in_git": true,
+      "notes": "保留目标仓库模型 profile"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\haruka_local_ja_song011.yaml",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\haruka_local_ja_song011.yaml",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\haruka_local_ja_song011.yaml",
+        "sha256": "362b37db9bf1894bbaf3cc47cc19e09de3ae22321a0cc68ac5222a5d41c1fea4",
+        "size_bytes": 1574,
+        "last_write_utc": "2026-08-21T03:09:43.3101734Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\haruka_local_ja_song011.yaml",
+        "sha256": "d735e8c1e2c221c726818e19924e76c72f2cf0e388c295bb9f472c68cd84fd6f",
+        "size_bytes": 1398,
+        "last_write_utc": "2026-08-26T03:05:13.6188218Z"
+      },
+      "action": "retained_target_profile",
+      "include_in_git": true,
+      "notes": "保留目标仓库模型 profile"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\languages\\ja_common.yaml",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\languages\\ja_common.yaml",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\profiles\\languages\\ja_common.yaml",
+        "sha256": "63cd9b9c0eb79783d23149516bfbc4fba13ca663d6b5f704ac847334497cdaf4",
+        "size_bytes": 1195,
+        "last_write_utc": "2026-08-21T09:37:38.5049589Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\profiles\\languages\\ja_common.yaml",
+        "sha256": "63cd9b9c0eb79783d23149516bfbc4fba13ca663d6b5f704ac847334497cdaf4",
+        "size_bytes": 1195,
+        "last_write_utc": "2026-08-21T09:37:38.5049589Z"
+      },
+      "action": "retained_target_profile",
+      "include_in_git": true,
+      "notes": "保留目标仓库语言 profile"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_units.py",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_units.py",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\haruka_svs_cover_prep\\tests\\test_units.py",
+        "sha256": "37feaa269f9c8c1ca707d5ec52c43f633fd5195b6d7e22e54671a0564eb84058",
+        "size_bytes": 32556,
+        "last_write_utc": "2026-08-24T04:01:29.7102061Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_units.py",
+        "sha256": "ac850dbd251f7114255ab8cd1271a7c81cd98400392a9fcd225f1340cecade2b",
+        "size_bytes": 32662,
+        "last_write_utc": "2026-08-26T02:45:29.6403601Z"
+      },
+      "action": "retained_target_test_policy",
+      "include_in_git": true,
+      "notes": "目标仓库已有基础测试，未整文件覆盖"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\docs\\haruka-voice-project-technical-route.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\docs\\haruka-voice-project-technical-route.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\docs\\haruka-voice-project-technical-route.md",
+        "sha256": "5b7c917738de58829d0469b017ed1e34032f25fd7da41c9a00963b6b213ec78d",
+        "size_bytes": 21672,
+        "last_write_utc": "2026-08-26T02:21:20.5888840Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\docs\\haruka-voice-project-technical-route.md",
+        "sha256": "5b7c917738de58829d0469b017ed1e34032f25fd7da41c9a00963b6b213ec78d",
+        "size_bytes": 21672,
+        "last_write_utc": "2026-08-26T02:21:20.5888840Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "技术路线文档"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\docs\\superpowers\\plans\\2026-08-27-vocal2midi-old-pipeline-integration.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\docs\\superpowers\\plans\\2026-08-27-vocal2midi-old-pipeline-integration.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\docs\\superpowers\\plans\\2026-08-27-vocal2midi-old-pipeline-integration.md",
+        "sha256": "3f365134f263122ceb17106c4f5d9bdd990b242bc8ccd03c185f8e8de9fb7993",
+        "size_bytes": 16200,
+        "last_write_utc": "2026-08-27T04:27:12.2891537Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\docs\\superpowers\\plans\\2026-08-27-vocal2midi-old-pipeline-integration.md",
+        "sha256": "3f365134f263122ceb17106c4f5d9bdd990b242bc8ccd03c185f8e8de9fb7993",
+        "size_bytes": 16200,
+        "last_write_utc": "2026-08-27T04:27:12.2891537Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "Vocal2Midi 接入实施记录"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-inherit-technical-route\\task_plan.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-inherit-technical-route\\task_plan.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-inherit-technical-route\\task_plan.md",
+        "sha256": "8a04de54c798d77e1458559303da7520163a0151b2354098cfb047051253e46b",
+        "size_bytes": 1627,
+        "last_write_utc": "2026-08-26T02:23:12.2809517Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-inherit-technical-route\\task_plan.md",
+        "sha256": "8a04de54c798d77e1458559303da7520163a0151b2354098cfb047051253e46b",
+        "size_bytes": 1627,
+        "last_write_utc": "2026-08-26T02:23:12.2809517Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "历史规划记录"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-inherit-technical-route\\findings.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-inherit-technical-route\\findings.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-inherit-technical-route\\findings.md",
+        "sha256": "be659a9f192c72f7f4830d0e065251bc1e4baf2f0ea13aa015e3f7f802ba4eb1",
+        "size_bytes": 3601,
+        "last_write_utc": "2026-08-26T02:18:30.7827488Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-inherit-technical-route\\findings.md",
+        "sha256": "be659a9f192c72f7f4830d0e065251bc1e4baf2f0ea13aa015e3f7f802ba4eb1",
+        "size_bytes": 3601,
+        "last_write_utc": "2026-08-26T02:18:30.7827488Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "历史发现记录"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-inherit-technical-route\\progress.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-inherit-technical-route\\progress.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-inherit-technical-route\\progress.md",
+        "sha256": "569c3a87c84f2aa0d8e9134df730c7d1980209b2bc7379d275535a89f5b14415",
+        "size_bytes": 1004,
+        "last_write_utc": "2026-08-26T02:23:14.2094823Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-inherit-technical-route\\progress.md",
+        "sha256": "569c3a87c84f2aa0d8e9134df730c7d1980209b2bc7379d275535a89f5b14415",
+        "size_bytes": 1004,
+        "last_write_utc": "2026-08-26T02:23:14.2094823Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "历史进度记录"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-lyrics-emotion-integration\\task_plan.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-lyrics-emotion-integration\\task_plan.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-lyrics-emotion-integration\\task_plan.md",
+        "sha256": "0ddf618c65eaa7abf1f42d32438ba8297a453e5bb88ab60ce6045cfdb58c3d9d",
+        "size_bytes": 1728,
+        "last_write_utc": "2026-08-26T11:59:20.3859731Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-lyrics-emotion-integration\\task_plan.md",
+        "sha256": "0ddf618c65eaa7abf1f42d32438ba8297a453e5bb88ab60ce6045cfdb58c3d9d",
+        "size_bytes": 1728,
+        "last_write_utc": "2026-08-26T11:59:20.3859731Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "历史规划记录"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-lyrics-emotion-integration\\findings.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-lyrics-emotion-integration\\findings.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-lyrics-emotion-integration\\findings.md",
+        "sha256": "1172b728d886bb35d96d13f74fcda013feec648a8d91f509dac97aa56d7bbc85",
+        "size_bytes": 5797,
+        "last_write_utc": "2026-08-26T12:39:47.2286114Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-lyrics-emotion-integration\\findings.md",
+        "sha256": "1172b728d886bb35d96d13f74fcda013feec648a8d91f509dac97aa56d7bbc85",
+        "size_bytes": 5797,
+        "last_write_utc": "2026-08-26T12:39:47.2286114Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "历史发现记录"
+    },
+    {
+      "source_path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-lyrics-emotion-integration\\progress.md",
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-lyrics-emotion-integration\\progress.md",
+      "source_metadata": {
+        "path": "C:\\Users\\34618\\Documents\\novelm@ster\\.planning\\2026-08-26-lyrics-emotion-integration\\progress.md",
+        "sha256": "9030051eacbed63f8ccd05795e2b589c4264b357c23b63b4934d1665f7fa85aa",
+        "size_bytes": 1937,
+        "last_write_utc": "2026-08-26T12:39:33.5584778Z"
+      },
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\.planning\\2026-08-26-lyrics-emotion-integration\\progress.md",
+        "sha256": "9030051eacbed63f8ccd05795e2b589c4264b357c23b63b4934d1665f7fa85aa",
+        "size_bytes": 1937,
+        "last_write_utc": "2026-08-26T12:39:33.5584778Z"
+      },
+      "action": "copied_new",
+      "include_in_git": true,
+      "notes": "历史进度记录"
+    },
+    {
+      "source_path": null,
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\requirements-coverprep.txt",
+      "source_metadata": null,
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\requirements-coverprep.txt",
+        "sha256": "d358463289719a75560ceb4232391973071b509fc18f02b338d8c49f224701f3",
+        "size_bytes": 225,
+        "last_write_utc": "2026-08-27T04:53:29.7586225Z"
+      },
+      "action": "target_added_dependency",
+      "include_in_git": true,
+      "notes": "按计划新增 praat-parselmouth>=0.4.7,<1；旧项目没有同名依赖文件"
+    },
+    {
+      "source_path": null,
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\README.md",
+      "source_metadata": null,
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\README.md",
+        "sha256": "6586174cecfd004c7d2736e94403016a4238da690f40665493c7e51ffbd06839",
+        "size_bytes": 5947,
+        "last_write_utc": "2026-08-27T04:53:29.7597135Z"
+      },
+      "action": "updated_target_documentation",
+      "include_in_git": true,
+      "notes": "补充独立 coverprep_env 与外部 Vocal2Midi 用法"
+    },
+    {
+      "source_path": null,
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tools\\check_repo_policy.py",
+      "source_metadata": null,
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tools\\check_repo_policy.py",
+        "sha256": "bc75336dfddae3edcf607249f17402cf3584e2988bb4d4e745edd1d85fadb3ff",
+        "size_bytes": 3477,
+        "last_write_utc": "2026-08-27T06:37:18.940843Z"
+      },
+      "action": "target_policy_allows_conversation_archives",
+      "include_in_git": true,
+      "notes": "允许完整 Markdown 对话归档超过源码单文件大小阈值，同时继续执行密钥和二进制边界检查"
+    },
+    {
+      "source_path": null,
+      "target_path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_repo_policy.py",
+      "source_metadata": null,
+      "target_metadata": {
+        "path": "D:\\语音模型\\Haruka-Voice-Forge\\tests\\test_repo_policy.py",
+        "sha256": "a3cf151ef3b3f85b5a5fe5ddc9acb3ad3ac086d9b262d2740e7a335f71d6b211",
+        "size_bytes": 2957,
+        "last_write_utc": "2026-08-27T06:37:00.193832Z"
+      },
+      "action": "target_additive_regression_test",
+      "include_in_git": true,
+      "notes": "验证完整对话归档可超过普通源码大小限制"
+    }
+  ],
+  "excluded_patterns": [
+    "WAV/audio",
+    "model weights/checkpoints/indexes",
+    "datasets",
+    "virtual environments",
+    "*.pyc",
+    "Numba cache",
+    "third-party runtimes",
+    "D:\\Vocal2Midi-Local source/models/cache"
+  ]
+}
