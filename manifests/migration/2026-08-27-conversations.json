@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-08-27T06:30:10.371218Z",
+  "generated_at_utc": "2026-08-27T07:05:49.943946Z",
   "target_repository": "D:\\语音模型\\Haruka-Voice-Forge",
   "target_branch": "codex/migrate-vocal2midi-20260827",
   "base_commit": "153d73f2a6c8783bdf8338568bf7eb489b179324",
@@ -42,7 +42,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00a59-03ea-71d0-b147-c1940c60bf87.md",
         "sha256": "a5896e0f7baa8aa8aa3ac6013b8c61e17c60345cb70a8765dc5388d6d8654c51",
         "size_bytes": 9519692,
-        "last_write_utc": "2026-08-27T06:29:58.030566Z"
+        "last_write_utc": "2026-08-27T07:05:37.640603Z"
       },
       "record_counts": {
         "raw_lines": 10164,
@@ -87,7 +87,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a01fa4-6210-7b53-9499-abedc1ee353f.md",
         "sha256": "932216e3440236fd882b0b6ee214a530c018c66e7661de0f40161665783875e5",
         "size_bytes": 21989406,
-        "last_write_utc": "2026-08-27T06:29:59.484010Z"
+        "last_write_utc": "2026-08-27T07:05:39.106545Z"
       },
       "record_counts": {
         "raw_lines": 22184,
@@ -132,7 +132,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02499-f462-78e2-8304-1d3e5b8cdee1.md",
         "sha256": "3316da79e63a16131d235e01d39509864a3e189fb9408dde69e4bdce9e4f3f65",
         "size_bytes": 39634783,
-        "last_write_utc": "2026-08-27T06:30:04.769735Z"
+        "last_write_utc": "2026-08-27T07:05:44.305643Z"
       },
       "record_counts": {
         "raw_lines": 43056,
@@ -177,7 +177,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0365d-2aa6-7c01-bf0f-48e1249179ea.md",
         "sha256": "e6f4722a89f391a52541e12eec0455e3a8fbf198797d6039c7e4aacc5dec8671",
         "size_bytes": 339432,
-        "last_write_utc": "2026-08-27T06:30:04.819129Z"
+        "last_write_utc": "2026-08-27T07:05:44.358150Z"
       },
       "record_counts": {
         "raw_lines": 144,
@@ -222,7 +222,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03bcd-9f75-7311-9db6-d63090454951.md",
         "sha256": "8485cbf94d7e7ae22e134e1aa054f85a6bac0a7bd59486674b0f03d2e2799faf",
         "size_bytes": 1053301,
-        "last_write_utc": "2026-08-27T06:30:04.858377Z"
+        "last_write_utc": "2026-08-27T07:05:44.397656Z"
       },
       "record_counts": {
         "raw_lines": 536,
@@ -267,7 +267,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03ca4-3d50-7070-8f26-0b50b3ae3860.md",
         "sha256": "42cc846adca7d4e334e193487d2a409690c95574334a7366b2132d2635970ad0",
         "size_bytes": 4203885,
-        "last_write_utc": "2026-08-27T06:30:04.991941Z"
+        "last_write_utc": "2026-08-27T07:05:44.524763Z"
       },
       "record_counts": {
         "raw_lines": 3832,
@@ -321,7 +321,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03c9c-e1b6-74e1-a5ed-3ab1f10f543b.md",
         "sha256": "973275d2f28c920eb6aa120636f0141de32cde6f7ef32f8edd947ce0dfa8d731",
         "size_bytes": 11605641,
-        "last_write_utc": "2026-08-27T06:30:05.349766Z"
+        "last_write_utc": "2026-08-27T07:05:44.875076Z"
       },
       "record_counts": {
         "raw_lines": 9999,
@@ -366,7 +366,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03cac-d168-73d3-8dcf-f3fde9087b0f.md",
         "sha256": "c54555666279ebd91fac451d54adc581007fb45a2adcfce7961b9c0a46159d91",
         "size_bytes": 13613566,
-        "last_write_utc": "2026-08-27T06:30:05.800408Z"
+        "last_write_utc": "2026-08-27T07:05:45.360121Z"
       },
       "record_counts": {
         "raw_lines": 5719,
@@ -411,7 +411,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0041e-7cd4-7790-b4b9-5d90fa742413.md",
         "sha256": "19511f50852ab1925954e9eaafd915ae39cb531ab253b3d13d9251d67bb9b1bd",
         "size_bytes": 3306728,
-        "last_write_utc": "2026-08-27T06:30:05.938919Z"
+        "last_write_utc": "2026-08-27T07:05:45.488718Z"
       },
       "record_counts": {
         "raw_lines": 4464,
@@ -456,7 +456,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03de6-8807-71d0-add7-fee9df860bf0.md",
         "sha256": "61f985fd697c4993267f6c8a77006eb0c8ed84f52a8206eddfb11943411fc469",
         "size_bytes": 5703546,
-        "last_write_utc": "2026-08-27T06:30:06.140808Z"
+        "last_write_utc": "2026-08-27T07:05:45.694227Z"
       },
       "record_counts": {
         "raw_lines": 7413,
@@ -501,7 +501,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00540-6777-7113-8874-8baf479c0482.md",
         "sha256": "e18f8c7d656623ccba8e0a5562b6126901826ac00ed6a397a37bd4443e9358e6",
         "size_bytes": 3039043,
-        "last_write_utc": "2026-08-27T06:30:06.405846Z"
+        "last_write_utc": "2026-08-27T07:05:45.961441Z"
       },
       "record_counts": {
         "raw_lines": 4754,
@@ -546,7 +546,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00332-f82e-7983-a92c-4b3d0a6dc16a.md",
         "sha256": "dc6452b9e702689f1ab0228b0dc18fe8cd6018e0d8badfc78ba5b8c0f7676eeb",
         "size_bytes": 18987128,
-        "last_write_utc": "2026-08-27T06:30:07.903189Z"
+        "last_write_utc": "2026-08-27T07:05:47.447104Z"
       },
       "record_counts": {
         "raw_lines": 28165,
@@ -591,7 +591,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00048-622f-7983-9c87-68583b12e2ef.md",
         "sha256": "2b70f61a73587f290f5f1a5d49fbb391695ba0d9c2c660766e5a342fe7f374fe",
         "size_bytes": 19147426,
-        "last_write_utc": "2026-08-27T06:30:09.167556Z"
+        "last_write_utc": "2026-08-27T07:05:48.716800Z"
       },
       "record_counts": {
         "raw_lines": 28647,
@@ -636,7 +636,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a00009-0ebf-7fe2-89ce-30028a9eaee9.md",
         "sha256": "3c5b610b8f3ca5bbcd9a83c0d13c8ed245d91c476b1d61df0c7f04361a07cd79",
         "size_bytes": 883277,
-        "last_write_utc": "2026-08-27T06:30:09.351546Z"
+        "last_write_utc": "2026-08-27T07:05:48.908878Z"
       },
       "record_counts": {
         "raw_lines": 1052,
@@ -681,7 +681,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a01f07-fdca-7c33-9098-8bccb66724e5.md",
         "sha256": "a9df55d93d90fb409d4e5d77d4dc932dd8de3ecce13d21b603fda543bea54e58",
         "size_bytes": 7665294,
-        "last_write_utc": "2026-08-27T06:30:09.568375Z"
+        "last_write_utc": "2026-08-27T07:05:49.114489Z"
       },
       "record_counts": {
         "raw_lines": 7113,
@@ -726,7 +726,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a0035b-2f4d-7532-9c14-d3a29e1bf9b1.md",
         "sha256": "decf398cb5dd170bf54fd73122a3ca6b4af56d4d167bd49af129c02dc180d0ed",
         "size_bytes": 1614694,
-        "last_write_utc": "2026-08-27T06:30:09.635839Z"
+        "last_write_utc": "2026-08-27T07:05:49.173935Z"
       },
       "record_counts": {
         "raw_lines": 1501,
@@ -771,7 +771,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a026cf-6d2a-7fe1-9b6a-aec20bb2c126.md",
         "sha256": "0befdee677021550b96a1d3e06b8d65df3dc53f5b69f40247da08991d5cb5fa1",
         "size_bytes": 1763011,
-        "last_write_utc": "2026-08-27T06:30:09.681026Z"
+        "last_write_utc": "2026-08-27T07:05:49.218809Z"
       },
       "record_counts": {
         "raw_lines": 724,
@@ -816,7 +816,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02711-5260-75c0-bce8-b6abad73f471.md",
         "sha256": "cec4d37655745749d74d53325b2df82b01e9bb999be080a9525f8c97940df902",
         "size_bytes": 2331029,
-        "last_write_utc": "2026-08-27T06:30:09.903663Z"
+        "last_write_utc": "2026-08-27T07:05:49.441615Z"
       },
       "record_counts": {
         "raw_lines": 2339,
@@ -879,7 +879,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a037eb-22d1-7b33-bbad-6bbded790ff4.md",
         "sha256": "bd5cb4215fded093e3a7840ce64a5861973889a54b47a01b7d32f22c7ad90b6c",
         "size_bytes": 1309122,
-        "last_write_utc": "2026-08-27T06:30:09.948142Z"
+        "last_write_utc": "2026-08-27T07:05:49.489387Z"
       },
       "record_counts": {
         "raw_lines": 1062,
@@ -924,7 +924,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a02735-808c-7a30-99d0-12367d59e8e7.md",
         "sha256": "0beb26b8f00300bf6a67ce4426de4ab81fd9971249828ae43b4b820ef5fe4705",
         "size_bytes": 1603394,
-        "last_write_utc": "2026-08-27T06:30:10.000515Z"
+        "last_write_utc": "2026-08-27T07:05:49.541506Z"
       },
       "record_counts": {
         "raw_lines": 1152,
@@ -978,7 +978,7 @@
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a040c0-bfa3-7683-a65c-a32c125eaac4.md",
         "sha256": "58611f4f3ac111ce63497d56ff8901cc647ef9effe68fa5ea20e8d3b937a1990",
         "size_bytes": 5480802,
-        "last_write_utc": "2026-08-27T06:30:10.137634Z"
+        "last_write_utc": "2026-08-27T07:05:49.680269Z"
       },
       "record_counts": {
         "raw_lines": 3620,
@@ -1010,34 +1010,34 @@
       "raw_session_files": [
         {
           "path": "C:\\Users\\34618\\.codex\\sessions\\2026\\08\\26\\rollout-2026-08-26T19-34-48-01a03dd9-f1c5-7851-9b1d-f1ad06667f5d.jsonl",
-          "size_bytes_at_start": 25884195,
-          "last_write_utc_at_start": "2026-08-27T06:29:53.339797Z",
-          "size_bytes_at_end": 25884195,
-          "last_write_utc_at_end": "2026-08-27T06:29:53.339797Z",
-          "sha256": "a9b688c4aeacd7ae62c73f4a40cef42e0006fdec000079a6a810192b8f8d2dea",
+          "size_bytes_at_start": 29503550,
+          "last_write_utc_at_start": "2026-08-27T07:05:33.423094Z",
+          "size_bytes_at_end": 29503550,
+          "last_write_utc_at_end": "2026-08-27T07:05:33.423094Z",
+          "sha256": "1c1fd5445183cf4ae71e986d5c3c8ddaaf373d39cdaf2b78c80bb7e282df74ce",
           "changed_during_read": false
         }
       ],
       "archive_path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03dd9-f1c5-7851-9b1d-f1ad06667f5d.md",
       "archive_metadata": {
         "path": "D:\\语音模型\\Haruka-Voice-Forge\\conversations\\archive\\01a03dd9-f1c5-7851-9b1d-f1ad06667f5d.md",
-        "sha256": "24697df69db06ec9718b1f64eeebcb5da4ccab7e4cc4e7e2e6deb944fe1275a5",
-        "size_bytes": 10500631,
-        "last_write_utc": "2026-08-27T06:30:10.362017Z"
+        "sha256": "ce09515669f2e4c7e37a956e462a9af66c59a4238f9105bbecdd26d80a953c5d",
+        "size_bytes": 11964277,
+        "last_write_utc": "2026-08-27T07:05:49.934050Z"
       },
       "record_counts": {
-        "raw_lines": 2671,
-        "included_records": 1060,
+        "raw_lines": 3700,
+        "included_records": 1506,
         "user_messages": 9,
-        "assistant_messages": 40,
-        "tool_calls": 391,
-        "tool_results": 390,
-        "command_executions": 218,
-        "file_changes": 10,
+        "assistant_messages": 53,
+        "tool_calls": 553,
+        "tool_results": 552,
+        "command_executions": 316,
+        "file_changes": 21,
         "plans": 2,
         "scaffold_messages_skipped": 2,
         "empty_messages_skipped": 0,
-        "platform_records_skipped": 44,
+        "platform_records_skipped": 48,
         "parse_errors": 0,
         "source_open_errors": 0
       },
