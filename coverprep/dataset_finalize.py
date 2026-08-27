@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .audio import extract_f0, inspect_audio, select_mono_channel
+from .ds_v3 import build_full_ds
 from .io import file_metadata, load_json, load_yaml, sha256_file, write_json, write_yaml
 from .mfa import (
     MFAError,
@@ -33,6 +34,7 @@ from .mfa import (
 )
 from .schema import item_duration, parse_numbers, parse_sequence, validate_ds_item
 from .training_dataset import _derive_window_wav
+from .phone_set import PhoneSetError, load_phone_manifest, manifest_snapshot, normalize_phones, validate_ds_phones
 
 
 FINALIZE_STAGES = ["freeze", "segment", "align", "pitch", "build", "qa", "package"]
@@ -72,6 +74,18 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
         if not isinstance(value, dict):
             raise DatasetFinalizeError(f"JSONL 第 {line_number} 行不是对象: {path}")
         rows.append(value)
+    return rows
+
+
+def _load_base_training_rows(base_dataset: Path) -> list[dict[str, Any]]:
+    """读取 v13 的训练记录，保留所有语义字段，不做重新对齐或规范化。"""
+    manifest_path = base_dataset.resolve() / "metadata" / "manifest.jsonl"
+    rows = [dict(row) for row in _read_jsonl(manifest_path) if str(row.get("record_type", "training")) == "training"]
+    if not rows:
+        raise DatasetFinalizeError(f"v13 manifest 没有 training 记录: {manifest_path}")
+    names = [str(row.get("name", "")) for row in rows]
+    if any(not name for name in names) or len(set(names)) != len(names):
+        raise DatasetFinalizeError("v13 manifest 的 training 记录存在空名或重复名")
     return rows
 
 
@@ -1694,6 +1708,752 @@ def _run_server_preflight(path: Path) -> dict[str, Any]:
         result = {"passed": False, "checks": [], "error": completed.stderr.strip() or completed.stdout.strip()}
     result["process_returncode"] = completed.returncode
     return result
+
+
+def _expanded_song_entries(source_dataset: Path) -> dict[str, dict[str, Any]]:
+    """读取扩展工作区登记的歌曲，统一兼容对象和列表两种写法。"""
+    payload = _read_json(source_dataset / "metadata" / "expansion_sources.json", {})
+    raw = payload.get("songs", {}) if isinstance(payload, dict) else {}
+    if isinstance(raw, dict):
+        return {str(song_id): dict(value) for song_id, value in raw.items() if isinstance(value, dict)}
+    if isinstance(raw, list):
+        return {
+            str(value.get("song_id")): dict(value)
+            for value in raw
+            if isinstance(value, dict) and value.get("song_id")
+        }
+    raise DatasetFinalizeError("扩展源登记的 songs 必须是对象或数组")
+
+
+def _expanded_status_pass(value: object) -> bool:
+    return str(value or "").strip().upper() in {
+        "PASS",
+        "PASSED",
+        "APPROVED",
+        "ACCEPTED",
+        "USER_APPROVED",
+        "MANUAL_PASS",
+        "AUDIO_REVIEW_PASS",
+        "REVIEWED_PASS",
+    }
+
+
+def _expanded_status_rejected(value: object) -> bool:
+    return str(value or "").strip().upper() in {
+        "REJECT",
+        "REJECTED",
+        "EXCLUDED",
+        "FAIL",
+        "FAILED",
+        "NOT_ACCEPTED",
+    }
+
+
+def _expanded_review_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    raw = payload.get("songs", []) if isinstance(payload, dict) else []
+    if isinstance(raw, list):
+        return [dict(row) for row in raw if isinstance(row, dict)]
+    if isinstance(raw, dict):
+        rows: list[dict[str, Any]] = []
+        for song_id, value in raw.items():
+            if isinstance(value, dict):
+                rows.append({"song_id": song_id, **value})
+            elif isinstance(value, list):
+                rows.extend({"song_id": song_id, **row} for row in value if isinstance(row, dict))
+        return rows
+    return []
+
+
+def _freeze_expanded_source(source_dataset: Path, base_dataset: Path) -> dict[str, Any]:
+    """只读检查 v13 快照、补充来源和人工音频复审门。"""
+    source_dataset = source_dataset.resolve()
+    base_dataset = base_dataset.resolve()
+    blockers: list[dict[str, Any]] = []
+    snapshot_path = source_dataset / "metadata" / "base_v13_snapshot.json"
+    snapshot = _read_json(snapshot_path, {}) if snapshot_path.is_file() else {}
+    if not isinstance(snapshot, dict):
+        blockers.append({"type": "BASE_SNAPSHOT_INVALID", "path": str(snapshot_path)})
+        snapshot = {}
+    if not base_dataset.is_dir():
+        blockers.append({"type": "BASE_DATASET_MISSING", "path": str(base_dataset)})
+        base_hash = ""
+        base_manifest_hash = ""
+    else:
+        base_hash = _tree_hash(base_dataset)
+        base_manifest = base_dataset / "metadata" / "manifest.jsonl"
+        base_manifest_hash = sha256_file(base_manifest) if base_manifest.is_file() else ""
+        if snapshot.get("base_tree_sha256") and snapshot.get("base_tree_sha256") != base_hash:
+            blockers.append({"type": "BASE_TREE_CHANGED", "expected": snapshot.get("base_tree_sha256"), "actual": base_hash})
+        if snapshot.get("base_manifest_sha256") and snapshot.get("base_manifest_sha256") != base_manifest_hash:
+            blockers.append({"type": "BASE_MANIFEST_CHANGED", "expected": snapshot.get("base_manifest_sha256"), "actual": base_manifest_hash})
+        try:
+            base_count = len(_load_base_training_rows(base_dataset))
+        except DatasetFinalizeError as exc:
+            blockers.append({"type": "BASE_MANIFEST_INVALID", "message": str(exc)})
+            base_count = 0
+        expected_count = int(snapshot.get("base_record_count", base_count) or 0)
+        if expected_count and base_count != expected_count:
+            blockers.append({"type": "BASE_RECORD_COUNT_CHANGED", "expected": expected_count, "actual": base_count})
+        for filename, expected in (snapshot.get("base_package_sha256", {}) or {}).items():
+            package = base_dataset / "packages" / str(filename)
+            if not package.is_file() or sha256_file(package) != str(expected).lower():
+                blockers.append({"type": "BASE_PACKAGE_CHANGED", "name": str(filename)})
+
+    try:
+        entries = _expanded_song_entries(source_dataset)
+    except (DatasetFinalizeError, OSError, json.JSONDecodeError) as exc:
+        entries = {}
+        blockers.append({"type": "EXPANSION_SOURCES_INVALID", "message": str(exc)})
+    song_ids = sorted(entries)
+    review_path = source_dataset / "reports" / "svs_audio_review.json"
+    review_payload = _read_json(review_path, {}) if review_path.is_file() else {}
+    review_rows = _expanded_review_rows(review_payload)
+    review_status = str(review_payload.get("status") or "").strip().upper()
+    if review_status not in {
+        "PASS",
+        "PASSED",
+        "APPROVED",
+        "ACCEPTED",
+        "USER_APPROVED",
+        "MANUAL_PASS",
+        "AUDIO_REVIEW_PASS",
+        "REVIEWED_PASS",
+        "PARTIAL_PASS",
+        "REVIEW_COMPLETE",
+        "APPROVED_WITH_EXCLUSIONS",
+    }:
+        blockers.append({"type": "AUDIO_REVIEW_NOT_PASSED", "status": review_payload.get("status", "MISSING")})
+    by_song: dict[str, list[dict[str, Any]]] = {song_id: [] for song_id in song_ids}
+    accepted_song_ids: list[str] = []
+    excluded_song_ids: list[str] = []
+    for row in review_rows:
+        song_id = str(row.get("song_id") or "")
+        if song_id in by_song:
+            by_song[song_id].append(row)
+            if not _expanded_status_pass(row.get("status")) and not _expanded_status_rejected(row.get("status")):
+                blockers.append({"type": "AUDIO_REVIEW_PENDING", "song_id": song_id, "clip_id": row.get("clip_id"), "status": row.get("status")})
+    for song_id in song_ids:
+        if not by_song[song_id]:
+            blockers.append({"type": "AUDIO_REVIEW_MISSING", "song_id": song_id})
+            continue
+        statuses = [row.get("status") for row in by_song[song_id]]
+        # 待审核/未知状态已经逐行记录为 blocker；此处不再重复添加“混合状态”，
+        # 只有全部是明确的通过/拒绝但两者混杂时才需要人工补齐整首歌曲的决定。
+        if any(not _expanded_status_pass(status) and not _expanded_status_rejected(status) for status in statuses):
+            continue
+        if all(_expanded_status_rejected(status) for status in statuses):
+            excluded_song_ids.append(song_id)
+        elif all(_expanded_status_pass(status) for status in statuses):
+            accepted_song_ids.append(song_id)
+        else:
+            blockers.append({"type": "AUDIO_REVIEW_MIXED_STATUS", "song_id": song_id})
+        song_dir = source_dataset / "songs" / song_id
+        source_record = _read_json(song_dir / "source.json", {}) if (song_dir / "source.json").is_file() else {}
+        source_path = Path(str(source_record.get("canonical_source_path") or source_record.get("source_path") or ""))
+        if not source_path.is_absolute():
+            source_path = source_dataset / source_path
+        metadata = file_metadata(source_path) if source_path.is_file() else {}
+        if (metadata.get("sample_rate"), metadata.get("channels"), metadata.get("sample_width")) != (SAMPLE_RATE, 2, 2):
+            blockers.append({"type": "CANONICAL_SOURCE_FORMAT", "song_id": song_id, "path": str(source_path), "metadata": metadata})
+        windows = _read_json(song_dir / "accepted_windows.json", []) if (song_dir / "accepted_windows.json").is_file() else []
+        if not isinstance(windows, list) or not windows:
+            blockers.append({"type": "ACCEPTED_WINDOWS_MISSING", "song_id": song_id})
+
+    return {
+        "status": "PASS" if not blockers else "BLOCKED",
+        "blockers": blockers,
+        "source_tree_sha256": _tree_hash(source_dataset) if source_dataset.is_dir() else "",
+        "base_tree_sha256": base_hash,
+        "base_manifest_sha256": base_manifest_hash,
+        "source_dataset": str(source_dataset),
+        "base_dataset": str(base_dataset),
+        "song_ids": song_ids,
+        "accepted_song_ids": sorted(accepted_song_ids),
+        "excluded_song_ids": sorted(excluded_song_ids),
+        "songs": entries,
+        "review": review_payload,
+        "snapshot": snapshot,
+    }
+
+
+def _expanded_annotation_gate(source_dataset: Path, song_ids: list[str]) -> list[dict[str, Any]]:
+    """检查新歌曲是否已填歌词、谱面和发音锁；不自动补齐任何行。"""
+    blockers: list[dict[str, Any]] = []
+    for song_id in song_ids:
+        song_dir = source_dataset / "songs" / song_id
+        lyrics_path = song_dir / "lyrics" / "ocr_draft.tsv"
+        if not lyrics_path.is_file():
+            blockers.append({"type": "LYRICS_FILE_MISSING", "song_id": song_id, "path": str(lyrics_path)})
+        else:
+            try:
+                with lyrics_path.open("r", encoding="utf-8-sig", newline="") as handle:
+                    reader = csv.DictReader(handle, delimiter="\t")
+                    fields = set(reader.fieldnames or [])
+                    rows = list(reader)
+                missing = sorted({"phrase_id", "surface", "reading", "note_count"} - fields)
+                if missing:
+                    blockers.append({"type": "LYRICS_TEMPLATE_INVALID", "song_id": song_id, "missing": missing})
+                if not rows:
+                    blockers.append({"type": "LYRICS_PENDING", "song_id": song_id, "path": str(lyrics_path)})
+                for row in rows:
+                    try:
+                        note_count = int(float(row.get("note_count", 0) or 0))
+                    except (TypeError, ValueError):
+                        note_count = 0
+                    if not row.get("surface") or not row.get("reading") or note_count <= 0:
+                        blockers.append({"type": "LYRICS_ROW_INVALID", "song_id": song_id, "phrase_id": row.get("phrase_id", "")})
+            except (OSError, UnicodeError, csv.Error) as exc:
+                blockers.append({"type": "LYRICS_FILE_INVALID", "song_id": song_id, "message": str(exc)})
+        required = (
+            song_dir / "lyrics" / "note_mapping_draft.json",
+            song_dir / "score" / "note_assignment_draft.json",
+            song_dir / "score" / "auto.mid",
+            song_dir / "lyrics" / "pronunciation_locks.json",
+        )
+        for path in required:
+            if not path.is_file():
+                blockers.append({"type": "ANNOTATION_OUTPUT_MISSING", "song_id": song_id, "path": str(path)})
+        locks_path = song_dir / "lyrics" / "pronunciation_locks.json"
+        if locks_path.is_file():
+            locks = _read_json(locks_path, [])
+            if not isinstance(locks, list) or not locks or any(str(row.get("status", "")).upper() != "LOCKED" for row in locks if isinstance(row, dict)):
+                blockers.append({"type": "PRONUNCIATION_LOCK_PENDING", "song_id": song_id})
+    return blockers
+
+
+def _expanded_phone_manifest(base_dataset: Path) -> Any:
+    """优先使用 v13 保存的 Generic47 真源，路径失效时回退到部署报告。"""
+    compatibility = _read_json(base_dataset / "reports" / "generic47_compatibility.json", {})
+    manifest_data = compatibility.get("manifest", {}) if isinstance(compatibility, dict) else {}
+    phone_path = Path(str(manifest_data.get("phone_set_path", "")))
+    mapping_path = Path(str(manifest_data.get("mapping_path", "")))
+    dictionary_path = Path(str(manifest_data.get("dictionary_path", "")))
+    candidates = [
+        (base_dataset / "metadata" / "generic47_phone_set.json", base_dataset / "metadata" / "generic47_phone_normalization.json", dictionary_path),
+        (phone_path, mapping_path, dictionary_path),
+    ]
+    for phone_candidate, mapping_candidate, dictionary_candidate in candidates:
+        if phone_candidate.is_file() and mapping_candidate.is_file() and dictionary_candidate.is_file():
+            try:
+                return load_phone_manifest(phone_candidate, mapping_candidate, dictionary_candidate, expected_count=47)
+            except PhoneSetError:
+                continue
+    raise DatasetFinalizeError("Generic47 phone_set、规范化映射或部署 dictionary 不完整")
+
+
+def _expanded_runtime_config(source_dataset: Path) -> dict[str, Any]:
+    """为补充歌曲复用仓库已有 MFA 配置，不从外部下载或写入模型。"""
+    package_root = Path(__file__).resolve().parents[1]
+    config = load_yaml(source_dataset / "dataset.yaml", {}) or {}
+    if not isinstance(config, dict):
+        config = {}
+    config.setdefault("model_profile", str((package_root / "profiles" / "haruka_local_ja_common_v1.yaml").resolve()))
+    config.setdefault("language_profile", str((package_root / "profiles" / "languages" / "ja_common.yaml").resolve()))
+    config.setdefault("local_tool_config", str((package_root / "config" / "tools.local.yaml").resolve()))
+    return config
+
+
+def _copy_expanded_workspace(source_dataset: Path, target_dataset: Path) -> None:
+    """复制扩展工作区到交付目录，排除旧包和运行状态。"""
+    ignored_names = {
+        "packages",
+        "UPLOAD_SHA256SUMS",
+        "server_preflight.py",
+        "dataset_state.json",
+        "package.json",
+        "package_preflight.json",
+        "package_preflight_unpacked.json",
+    }
+
+    def ignore(_directory: str, names: list[str]) -> set[str]:
+        return {name for name in names if name in ignored_names}
+
+    shutil.copytree(source_dataset, target_dataset, ignore=ignore)
+
+
+def _target_source_counterpart(source_dataset: Path, target_dataset: Path, source_path: Path) -> Path:
+    try:
+        return target_dataset / source_path.resolve().relative_to(source_dataset.resolve())
+    except ValueError:
+        return source_path
+
+
+def _segment_expanded(source_dataset: Path, target_dataset: Path, song_ids: list[str]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """按补充歌曲实际目录生成窗口和覆盖契约，不触碰 v13 基线记录。"""
+    all_items: list[dict[str, Any]] = []
+    issues: list[dict[str, Any]] = []
+    coverage = load_json(target_dataset / "metadata" / "coverage_contract.json", {}) or {}
+    if not isinstance(coverage, dict):
+        coverage = {}
+    segment_contract: dict[str, Any] = {}
+    for song_id in song_ids:
+        source_song = source_dataset / "songs" / song_id
+        target_song = target_dataset / "songs" / song_id
+        try:
+            material = _load_song_material(source_song)
+            items, song_issues = _build_phrase_items(material, song_id)
+        except (DatasetFinalizeError, OSError, ValueError, KeyError) as exc:
+            items, song_issues = [], [{"type": "SEGMENT_INPUT_INVALID", "song_id": song_id, "message": str(exc)}]
+            material = {"accepted": [], "excluded": [], "locks": []}
+        issues.extend(song_issues)
+        source_record = _read_json(source_song / "source.json", {})
+        source_path = Path(str(source_record.get("canonical_source_path") or source_record.get("source_path") or ""))
+        if not source_path.is_absolute():
+            source_path = source_dataset / source_path
+        target_source = _target_source_counterpart(source_dataset, target_dataset, source_path)
+        source_hash = str(source_record.get("canonical_source_sha256") or source_record.get("source_sha256") or (sha256_file(source_path) if source_path.is_file() else ""))
+        accepted_rows = _read_json(source_song / "accepted_windows.json", [])
+        for item in items:
+            item = dict(item)
+            item["source_audio_path"] = str(target_source.resolve())
+            item["source_sha256"] = source_hash
+            item["source_original_path"] = str(source_record.get("original_source_path", ""))
+            item["source_original_sha256"] = str(source_record.get("original_source_sha256", ""))
+            item["source_window_start_sec"] = item["source_start_sec"]
+            item["source_window_end_sec"] = item["source_end_sec"]
+            accepted_index = int(item.get("accepted_window_index", 0) or 0)
+            if 0 < accepted_index <= len(accepted_rows):
+                item["_source_split"] = str(accepted_rows[accepted_index - 1].get("split") or "train").lower()
+            else:
+                item["_source_split"] = "train"
+            item["status"] = "SEGMENTED_SUPPLEMENTAL"
+            all_items.append(item)
+        target_song.mkdir(parents=True, exist_ok=True)
+        write_json(target_song / "score" / "auto_notes_before_finalize.json", load_json(source_song / "score" / "auto_notes.json", []) or [])
+        write_json(target_song / "accepted_windows_before_finalize.json", accepted_rows)
+        write_json(target_song / "excluded_intervals.batch_repair.json", list(material.get("effective_excluded", material.get("excluded", []))))
+        write_json(target_song / "excluded_intervals.reclassified_to_sp.json", list(material.get("reclassified_rest", [])))
+        write_json(target_song / "lyrics" / "pronunciation_locks.json", list(material.get("locks", [])))
+        score = source_song / "score" / "auto.mid"
+        if score.is_file():
+            (target_song / "score").mkdir(parents=True, exist_ok=True)
+            _copy_or_verify(score, target_song / "score" / "auto.mid")
+        else:
+            issues.append({"type": "MIDI_MISSING", "song_id": song_id, "path": str(score)})
+        accepted_intervals = [
+            (float(row.get("start_sec", 0.0)), float(row.get("end_sec", 0.0)))
+            for row in accepted_rows
+            if float(row.get("end_sec", 0.0)) > float(row.get("start_sec", 0.0))
+        ]
+        excluded_intervals = [
+            (float(row.get("start_sec", 0.0)), float(row.get("end_sec", 0.0)))
+            for row in material.get("effective_excluded", material.get("excluded", []))
+            if float(row.get("end_sec", 0.0)) > float(row.get("start_sec", 0.0))
+        ]
+        observed = [(float(item["source_start_sec"]), float(item["source_end_sec"])) for item in all_items if item.get("song_id") == song_id]
+        expected = _subtract_interval_list(accepted_intervals, excluded_intervals)
+        segment_contract[song_id] = {
+            "accepted_intervals": [{"start_sec": start, "end_sec": end} for start, end in _union_intervals(accepted_intervals)],
+            "effective_excluded_intervals": [{"start_sec": start, "end_sec": end} for start, end in _union_intervals(excluded_intervals)],
+            "expected_training_intervals": [{"start_sec": start, "end_sec": end} for start, end in expected],
+            "observed_training_intervals": [{"start_sec": start, "end_sec": end} for start, end in _union_intervals(observed)],
+            "reclassified_rest": list(material.get("reclassified_rest", [])),
+        }
+    coverage.update(segment_contract)
+    write_json(target_dataset / "metadata" / "coverage_contract.json", coverage)
+    write_json(target_dataset / "metadata" / "expanded_segment_plan.json", {"song_ids": song_ids, "items": all_items, "issues": issues})
+    return all_items, issues
+
+
+def _normalize_expanded_items(items: list[dict[str, Any]], base_dataset: Path, target_dataset: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """只对补充记录的 ph_seq 应用五条已批准映射。"""
+    manifest = _expanded_phone_manifest(base_dataset)
+    expected_mapping = {"ɕː": "ɕ", "ŋ": "N", "tː": "t", "tsː": "ts", "ɯː": "ɯ"}
+    if manifest.mapping != expected_mapping:
+        raise DatasetFinalizeError(f"Generic47 映射不是既定五条映射: {manifest.mapping}")
+    before: set[str] = set()
+    after: set[str] = set()
+    mapping_changes = 0
+    normalized: list[dict[str, Any]] = []
+    for original in items:
+        item = dict(original)
+        phones = parse_sequence(item.get("ph_seq"))
+        before.update(phones)
+        mapped = normalize_phones(phones, expected_mapping)
+        after.update(mapped)
+        mapping_changes += sum(left != right for left, right in zip(phones, mapped))
+        item["ph_seq"] = " ".join(mapped)
+        normalized.append(item)
+    _, issues = build_full_ds(normalized, manifest)
+    report = {
+        "status": "PASS" if not issues else "BLOCKED",
+        "phone_count": manifest.phone_count,
+        "runtime_vocab_size": manifest.phone_count + 1,
+        "mapping": expected_mapping,
+        "before_unique_phones": sorted(before),
+        "after_unique_phones": sorted(after),
+        "mapping_change_count": mapping_changes,
+        "unknown_phone_count": len(issues),
+        "unknown_phones": sorted({str(issue.get("phone")) for issue in issues}),
+        "manifest": manifest_snapshot(manifest),
+    }
+    write_json(target_dataset / "reports" / "generic47_compatibility.json", report)
+    if issues:
+        raise DatasetFinalizeError("补充歌曲存在 Generic47 未知音素")
+    return normalized, report
+
+
+def _split_names(payload: dict[str, Any], group: str) -> list[str]:
+    values = payload.get(group, []) if isinstance(payload, dict) else []
+    return [str(value.get("name") if isinstance(value, dict) else value).removesuffix(".wav") for value in values]
+
+
+def _rebase_baseline_row(row: dict[str, Any], base_dataset: Path) -> dict[str, Any]:
+    result = dict(row)
+    wav_value = str(result.get("wav_path", ""))
+    if wav_value:
+        wav_path = Path(wav_value)
+        if wav_path.is_absolute():
+            try:
+                result["wav_path"] = wav_path.resolve().relative_to(base_dataset.resolve()).as_posix()
+            except ValueError:
+                result["wav_path"] = f"dataset/raw/wavs/{result.get('name', '')}.wav"
+    return result
+
+
+def _build_expanded_dataset_outputs(
+    target_dataset: Path,
+    base_dataset: Path,
+    baseline_rows: list[dict[str, Any]],
+    new_items: list[dict[str, Any]],
+    active_split: str,
+    phone_manifest: Any,
+) -> dict[str, Any]:
+    """写合并后的官方 CSV、manifest、notes 和动态 split。"""
+    base_rows = [_rebase_baseline_row(row, base_dataset) for row in baseline_rows]
+    all_items = [*base_rows, *new_items]
+    transcription_path = target_dataset / "dataset" / "raw" / "transcriptions.csv"
+    transcription_path.parent.mkdir(parents=True, exist_ok=True)
+    with transcription_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=TRAINING_TRANSCRIPTION_FIELDS)
+        writer.writeheader()
+        for item in all_items:
+            writer.writerow(build_training_csv_row(item))
+    _write_notes_csv(target_dataset / "score" / "notes.csv", all_items)
+
+    baseline_names = {str(item["name"]) for item in base_rows}
+    new_names = {str(item["name"]) for item in new_items}
+    split_rows: dict[str, dict[str, Any]] = {}
+    for label in ("development", "final"):
+        payload = load_json(base_dataset / "splits" / f"{label}.json", {}) or {}
+        groups = {group: _split_names(payload, group) for group in ("train", "validation", "benchmark")}
+        used = set().union(*groups.values()) if groups else set()
+        # v13 split 文件已给出所有基线片段；缺失时退回记录的 split_membership。
+        for item in base_rows:
+            name = str(item["name"])
+            if name in used:
+                continue
+            fallback = str((item.get("split_membership", {}) or {}).get(label) or "train")
+            groups.setdefault(fallback if fallback in groups else "train", []).append(name)
+        for item in new_items:
+            name = str(item["name"])
+            if name in used:
+                continue
+            requested = str(item.get("_source_split", "train")).lower()
+            group = requested if requested in groups else "train"
+            groups[group].append(name)
+        for group in groups:
+            groups[group] = list(dict.fromkeys(groups[group]))
+        split_rows[label] = {
+            "dataset_id": target_dataset.name,
+            "active": label == active_split,
+            "train": groups["train"],
+            "validation": groups["validation"],
+            "benchmark": groups["benchmark"],
+        }
+        write_json(target_dataset / "splits" / f"{label}.json", split_rows[label])
+
+    manifest_rows: list[dict[str, Any]] = []
+    for item in all_items:
+        row = {
+            "record_type": "training",
+            "name": item["name"],
+            "song_id": item.get("song_id", ""),
+            "source_start_sec": float(item.get("source_start_sec", 0.0)),
+            "source_end_sec": float(item.get("source_end_sec", 0.0)),
+            "duration_sec": float(item.get("duration_sec", 0.0)),
+            "source_audio_path": item.get("source_audio_path", ""),
+            "source_sha256": item.get("source_sha256", ""),
+            "wav_path": item.get("wav_path", f"dataset/raw/wavs/{item['name']}.wav"),
+            "wav_sha256": item.get("wav_sha256", ""),
+            "lang": item.get("lang", "ja"),
+            "text": item.get("text", ""),
+            "ph_seq": item.get("ph_seq", ""),
+            "ph_dur": item.get("ph_dur", ""),
+            "ph_num": item.get("ph_num", ""),
+            "note_seq": item.get("note_seq", ""),
+            "note_dur": item.get("note_dur", ""),
+            "note_slur": item.get("note_slur", ""),
+            "dictionary_variants": item.get("dictionary_variants", []),
+            "pronunciation_locks": item.get("pronunciation_locks", []),
+            "rest_resolutions": item.get("rest_resolutions", []),
+            "mfa_boundary_resolutions": item.get("mfa_boundary_resolutions", []),
+            "duration_contract_reconciliation": item.get("duration_contract_reconciliation", {}),
+            "alignment_status": item.get("alignment_status", "PENDING"),
+            "split_membership": {
+                label: next((group for group in ("train", "validation", "benchmark") if item["name"] in split_rows[label][group]), None)
+                for label in split_rows
+            },
+            "review_status": "accepted",
+        }
+        manifest_rows.append(row)
+    extras: list[dict[str, Any]] = []
+    locks: list[dict[str, Any]] = []
+    for item in base_rows:
+        locks.extend(item.get("pronunciation_locks", []) if isinstance(item.get("pronunciation_locks"), list) else [])
+    for song_id in sorted({str(item.get("song_id", "")) for item in new_items}):
+        song_dir = target_dataset / "songs" / song_id
+        for exclusion in load_json(song_dir / "excluded_intervals.batch_repair.json", []) or []:
+            extras.append({"record_type": "exclude", "song_id": song_id, **exclusion, "review_status": "accepted"})
+        for rest in load_json(song_dir / "excluded_intervals.reclassified_to_sp.json", []) or []:
+            extras.append({"record_type": "rest_reclassified", "song_id": song_id, **rest, "review_status": "accepted"})
+        locks.extend(load_json(song_dir / "lyrics" / "pronunciation_locks.json", []) or [])
+    _write_jsonl(target_dataset / "metadata" / "manifest.jsonl", [*manifest_rows, *extras])
+    write_json(target_dataset / "metadata" / "pronunciation_locks.json", locks)
+    ds_items, ds_issues = build_full_ds(all_items, phone_manifest)
+    if ds_issues:
+        raise DatasetFinalizeError(f"DS Generic47 校验失败: {ds_issues[0]}")
+    return {
+        "items": ds_items,
+        "manifest": manifest_rows,
+        "extras": extras,
+        "splits": split_rows,
+        "baseline_names": baseline_names,
+        "new_names": new_names,
+    }
+
+
+def _audit_expanded_dataset(
+    target_dataset: Path,
+    base_dataset: Path,
+    baseline_rows: list[dict[str, Any]],
+    freeze: dict[str, Any],
+    phone_manifest: Any,
+) -> dict[str, Any]:
+    """对合并目录执行旧 QA、Generic47、基线不变和歌曲数门禁。"""
+    primary = _audit_dataset(target_dataset, freeze.get("source_tree_sha256", ""))
+    manifest_rows = _read_jsonl(target_dataset / "metadata" / "manifest.jsonl")
+    target_by_name = {str(row.get("name")): row for row in manifest_rows if row.get("record_type") == "training"}
+    baseline_drift: list[dict[str, Any]] = []
+    for source in baseline_rows:
+        name = str(source.get("name"))
+        target = target_by_name.get(name)
+        if not target:
+            baseline_drift.append({"name": name, "type": "BASELINE_ROW_MISSING"})
+            continue
+        for field in ("ph_seq", "ph_dur", "ph_num", "note_seq", "note_dur", "note_slur", "wav_sha256", "duration_sec", "source_sha256"):
+            if str(target.get(field, "")) != str(source.get(field, "")):
+                baseline_drift.append({"name": name, "field": field, "type": "BASELINE_FIELD_CHANGED"})
+        wav = target_dataset / "dataset" / "raw" / "wavs" / f"{name}.wav"
+        base_wav = base_dataset / "dataset" / "raw" / "wavs" / f"{name}.wav"
+        if not wav.is_file() or not base_wav.is_file() or sha256_file(wav) != sha256_file(base_wav):
+            baseline_drift.append({"name": name, "type": "BASELINE_WAV_CHANGED"})
+    _, generic_issues = build_full_ds(target_by_name.values(), phone_manifest)
+    song_ids = {str(row.get("song_id", "")) for row in target_by_name.values() if row.get("song_id")}
+    excluded_song_ids = {"song-002"}
+    excluded_names = {"v4_song001__w007", "v4_song004__w013"}
+    excluded_present = sorted(
+        str(row.get("name"))
+        for row in target_by_name.values()
+        if str(row.get("song_id")) in excluded_song_ids or str(row.get("name")) in excluded_names
+    )
+    distinct_count = len(song_ids)
+    duration_total = sum(float(row.get("duration_sec", 0.0) or 0.0) for row in target_by_name.values())
+    cache_report = {
+        "status": "PENDING_NEW_ITEMS",
+        "reason": "本轮只完成数据包合并和结构 QA，未生成新的正式二值缓存",
+        "training_started": False,
+        "gpu_model_loaded": False,
+        "base_cache_reused": True,
+    }
+    write_json(target_dataset / "reports" / "native_binary_cache.json", cache_report)
+    extra_checks = [
+        {"code": "BASELINE_SEMANTIC_FIELDS_UNCHANGED", "passed": not baseline_drift, "details": baseline_drift},
+        {"code": "GENERIC47_UNKNOWN_ZERO", "passed": not generic_issues, "unknown_phone_count": len(generic_issues)},
+        {"code": "GENERIC47_RUNTIME_VOCAB", "passed": phone_manifest.phone_count + 1 == 48, "runtime_vocab_size": phone_manifest.phone_count + 1},
+        {"code": "EXPANDED_SONG_COUNT", "passed": 12 <= distinct_count <= 16, "count": distinct_count},
+        {"code": "EXCLUDED_ITEMS_ABSENT", "passed": not excluded_present, "items": excluded_present},
+        {"code": "SOURCE_V13_UNCHANGED", "passed": _tree_hash(base_dataset) == freeze.get("base_tree_sha256"), "expected": freeze.get("base_tree_sha256"), "actual": _tree_hash(base_dataset)},
+    ]
+    passed = primary.get("passed", False) and all(bool(check["passed"]) for check in extra_checks)
+    return {
+        "status": "PASS" if passed else "BLOCKED",
+        "passed": passed,
+        "primary": primary,
+        "checks": extra_checks,
+        "baseline_drift": baseline_drift,
+        "generic47": {"unknown_phone_count": len(generic_issues), "unknown_phones": sorted({str(issue.get("phone")) for issue in generic_issues})},
+        "song_count": distinct_count,
+        "record_count": len(target_by_name),
+        "audio_total_duration_sec": duration_total,
+        "binary_cache": cache_report,
+        "training_started": False,
+    }
+
+
+def finalize_expanded_dataset(
+    source_dataset: Path,
+    base_dataset: Path,
+    target_dataset: Path,
+    *,
+    through: str = "package",
+    active_split: str = "development",
+    dry_run: bool = False,
+    resume: bool = False,
+) -> dict[str, Any]:
+    """合并 v13 基线和补充歌曲；基线记录只复制，不重新对齐或重算 F0。"""
+    source_dataset = source_dataset.resolve()
+    base_dataset = base_dataset.resolve()
+    target_dataset = target_dataset.resolve()
+    if through not in FINALIZE_STAGES:
+        raise ValueError(f"未知扩展收尾阶段: {through}")
+    if not source_dataset.is_dir():
+        raise DatasetFinalizeError(f"v14 扩展工作区不存在: {source_dataset}")
+    if not base_dataset.is_dir():
+        raise DatasetFinalizeError(f"v13 基线不存在: {base_dataset}")
+    if not resume:
+        ensure_target_absent(target_dataset, dry_run=dry_run)
+
+    freeze = _freeze_expanded_source(source_dataset, base_dataset)
+    report: dict[str, Any] = {
+        "status": "DRY_RUN" if dry_run else "RUNNING",
+        "source_dataset": str(source_dataset),
+        "base_dataset": str(base_dataset),
+        "target_dataset": str(target_dataset),
+        "through": through,
+        "active_split": active_split,
+        "source_tree_sha256": freeze.get("source_tree_sha256", ""),
+        "base_tree_sha256": freeze.get("base_tree_sha256", ""),
+        "training_started": False,
+        "inference_started": False,
+    }
+    if freeze.get("status") != "PASS":
+        report.update(
+            {
+                "status": "BLOCKED",
+                "blockers": freeze.get("blockers", []),
+                "candidate_song_ids": freeze.get("song_ids", []),
+                "accepted_song_ids": freeze.get("accepted_song_ids", []),
+                "excluded_song_ids": freeze.get("excluded_song_ids", []),
+                "next_step": "完成候选歌曲人工复审；不通过的整首歌曲将排除，不用弱素材补数",
+            }
+        )
+        write_json(source_dataset / "reports" / "finalize_expanded.json", report)
+        return report
+
+    stage_index = FINALIZE_STAGES.index(through)
+    # 只有整首歌的片段全部通过才进入构建；整首拒绝的候选保留在复审记录中但不纳入。
+    song_ids = list(freeze.get("accepted_song_ids", freeze.get("song_ids", [])))
+    if stage_index >= FINALIZE_STAGES.index("segment"):
+        annotation_blockers = _expanded_annotation_gate(source_dataset, song_ids)
+        if annotation_blockers:
+            report.update({"status": "BLOCKED", "blockers": annotation_blockers, "next_step": "完成本地歌词 TSV、lyrics/g2p/note mapping 和 GAME 谱面审核"})
+            write_json(source_dataset / "reports" / "finalize_expanded.json", report)
+            return report
+    if dry_run:
+        report.update(
+            {
+                "status": "DRY_RUN",
+                "selected_song_ids": song_ids,
+                "base_record_count": len(_load_base_training_rows(base_dataset)),
+                "next_step": "通过音频复审和歌词/谱面门后再执行正式扩展收尾",
+            }
+        )
+        write_json(source_dataset / "reports" / "finalize_expanded.json", report)
+        return report
+
+    if not resume:
+        _copy_expanded_workspace(source_dataset, target_dataset)
+    target_dataset.mkdir(parents=True, exist_ok=True)
+    for directory in ("dataset/raw/wavs", "alignment/textgrids", "alignment/labs", "score", "metadata", "reports", "splits", "songs", "packages"):
+        (target_dataset / directory).mkdir(parents=True, exist_ok=True)
+    baseline_rows = _load_base_training_rows(base_dataset)
+    write_json(target_dataset / "metadata" / "freeze_snapshot.json", freeze)
+    write_json(
+        target_dataset / "reports" / "finalize_freeze.json",
+        {
+            "status": "PASS",
+            "base_v13_tree_sha256": freeze.get("base_tree_sha256"),
+            "source_tree_sha256": freeze.get("source_tree_sha256"),
+            "song_ids": song_ids,
+            "excluded_song_ids": list(freeze.get("excluded_song_ids", [])),
+        },
+    )
+    phone_manifest = None
+    new_items: list[dict[str, Any]] = []
+    if stage_index >= FINALIZE_STAGES.index("segment"):
+        try:
+            new_items, segment_issues = _segment_expanded(source_dataset, target_dataset, song_ids)
+            if segment_issues:
+                report.update({"status": "BLOCKED", "segment_issues": segment_issues})
+                write_json(target_dataset / "reports" / "segment_issues.json", segment_issues)
+                return report
+            new_items, _ = _normalize_expanded_items(new_items, base_dataset, target_dataset)
+            phone_manifest = _expanded_phone_manifest(base_dataset)
+        except (DatasetFinalizeError, OSError, ValueError, KeyError) as exc:
+            report.update({"status": "BLOCKED", "segment_error": str(exc)})
+            write_json(target_dataset / "reports" / "segment_blocked.json", report)
+            return report
+    if stage_index >= FINALIZE_STAGES.index("align"):
+        runtime_config = _expanded_runtime_config(source_dataset)
+        aligned: list[dict[str, Any]] = []
+        for index, item in enumerate(new_items, 1):
+            try:
+                cached = _load_cached_alignment(item, target_dataset) if resume else None
+                aligned.append(cached or _align_item(item, target_dataset, runtime_config, index))
+            except (MFAError, DatasetFinalizeError, OSError, RuntimeError, ValueError) as exc:
+                blocked = {"status": "BLOCKED", "message": str(exc), "segment": item.get("name")}
+                write_json(target_dataset / "reports" / "alignment_blocked.json", blocked)
+                report.update({"status": "BLOCKED", "alignment_error": str(exc), "segment": item.get("name")})
+                return report
+        new_items = aligned
+    if stage_index >= FINALIZE_STAGES.index("pitch"):
+        try:
+            profile, _, _ = _mfa_config(_expanded_runtime_config(source_dataset))
+            for item in new_items:
+                _pitch_sidecar(item, target_dataset, profile)
+        except (DatasetFinalizeError, OSError, RuntimeError, ValueError) as exc:
+            report.update({"status": "BLOCKED", "pitch_error": str(exc), "binary_cache_status": "PENDING_PYWORLD_OR_PITCH_QA"})
+            write_json(target_dataset / "reports" / "pitch_blocked.json", report)
+            return report
+    if stage_index >= FINALIZE_STAGES.index("build"):
+        if phone_manifest is None:
+            phone_manifest = _expanded_phone_manifest(base_dataset)
+        built = _build_expanded_dataset_outputs(target_dataset, base_dataset, baseline_rows, new_items, active_split, phone_manifest)
+        qa_build = _audit_expanded_dataset(target_dataset, base_dataset, baseline_rows, freeze, phone_manifest)
+        write_json(target_dataset / "reports" / "qa_build.json", qa_build)
+        report["record_count"] = len(built.get("items", []))
+        if not qa_build.get("passed") and stage_index == FINALIZE_STAGES.index("build"):
+            report.update({"status": "BLOCKED", "qa": qa_build})
+            return report
+    if stage_index >= FINALIZE_STAGES.index("qa"):
+        if phone_manifest is None:
+            phone_manifest = _expanded_phone_manifest(base_dataset)
+        qa_primary = _audit_expanded_dataset(target_dataset, base_dataset, baseline_rows, freeze, phone_manifest)
+        independent = run_independent_qa_process(target_dataset)
+        base_after = _tree_hash(base_dataset)
+        source_after = _tree_hash(source_dataset)
+        qa = {
+            "status": "PASS" if qa_primary.get("passed") and independent.get("passed") and base_after == freeze.get("base_tree_sha256") and source_after == freeze.get("source_tree_sha256") else "BLOCKED",
+            "passed": bool(qa_primary.get("passed") and independent.get("passed") and base_after == freeze.get("base_tree_sha256") and source_after == freeze.get("source_tree_sha256")),
+            "primary": qa_primary,
+            "independent": independent,
+            "base_v13_unchanged": base_after == freeze.get("base_tree_sha256"),
+            "source_work_unchanged": source_after == freeze.get("source_tree_sha256"),
+            "training_started": False,
+        }
+        write_json(target_dataset / "reports" / "qa_final.json", qa)
+        report["qa"] = qa
+        if not qa["passed"]:
+            report["status"] = "BLOCKED"
+            return report
+    if stage_index >= FINALIZE_STAGES.index("package"):
+        package = _package_dataset(target_dataset)
+        write_json(target_dataset / "dataset_state.json", {"status": "LOCAL_PACKAGE_READY", "stage": "package", "training_started": False, "inference_started": False, "base_v13_tree_sha256": freeze.get("base_tree_sha256"), "package": package})
+        report.update({"status": "LOCAL_PACKAGE_READY", "package": package})
+    else:
+        report["status"] = "STAGE_COMPLETE"
+    return report
 
 
 def run_independent_qa_process(root: Path) -> dict[str, Any]:

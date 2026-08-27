@@ -1,10 +1,187 @@
 import tempfile
 import unittest
 import wave
+import json
 from pathlib import Path
 
 
 class DatasetFinalizeContractTests(unittest.TestCase):
+    def test_expanded_finalize_blocks_pending_user_review_without_creating_target(self):
+        from coverprep.dataset_finalize import _tree_hash, finalize_expanded_dataset, sha256_file
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            base = root / "v13"
+            source = root / "v14-work"
+            target = root / "v14"
+            (base / "metadata").mkdir(parents=True)
+            (base / "dataset" / "raw" / "wavs").mkdir(parents=True)
+            (base / "metadata" / "manifest.jsonl").write_text(
+                json.dumps(
+                    {
+                        "record_type": "training",
+                        "name": "base__w001",
+                        "song_id": "song-011",
+                        "ph_seq": "a",
+                        "ph_dur": "1.0",
+                        "ph_num": "1",
+                        "note_seq": "C4",
+                        "note_dur": "1.0",
+                        "note_slur": "0",
+                        "wav_path": "dataset/raw/wavs/base__w001.wav",
+                        "wav_sha256": "base-hash",
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            source.mkdir()
+            (source / "metadata").mkdir()
+            (source / "reports").mkdir()
+            snapshot = {
+                "base_dataset": str(base),
+                "base_tree_sha256": _tree_hash(base),
+                "base_manifest_sha256": sha256_file(base / "metadata" / "manifest.jsonl"),
+                "base_package_sha256": {},
+                "base_record_count": 1,
+            }
+            (source / "metadata" / "base_v13_snapshot.json").write_text(json.dumps(snapshot), encoding="utf-8")
+            (source / "metadata" / "expansion_sources.json").write_text(json.dumps({"songs": {}}), encoding="utf-8")
+            (source / "reports" / "svs_audio_review.json").write_text(
+                json.dumps({"status": "PENDING_USER_AUDIO_REVIEW", "songs": []}),
+                encoding="utf-8",
+            )
+
+            result = finalize_expanded_dataset(source, base, target, through="freeze")
+
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["training_started"])
+        self.assertFalse(target.exists())
+
+    def test_expanded_freeze_excludes_fully_rejected_songs(self):
+        from coverprep.dataset_finalize import _freeze_expanded_source, _tree_hash, sha256_file
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            base = root / "v13"
+            source = root / "v14-work"
+            (base / "metadata").mkdir(parents=True)
+            (base / "metadata" / "manifest.jsonl").write_text(
+                json.dumps({"record_type": "training", "name": "base__w001"}) + "\n", encoding="utf-8"
+            )
+            (source / "metadata").mkdir(parents=True)
+            (source / "reports").mkdir(parents=True)
+            (source / "songs").mkdir()
+            snapshot = {
+                "base_tree_sha256": _tree_hash(base),
+                "base_manifest_sha256": sha256_file(base / "metadata" / "manifest.jsonl"),
+                "base_package_sha256": {},
+                "base_record_count": 1,
+            }
+            (source / "metadata" / "base_v13_snapshot.json").write_text(json.dumps(snapshot), encoding="utf-8")
+            (source / "metadata" / "expansion_sources.json").write_text(
+                json.dumps({"songs": {"song-010": {}, "song-017": {}}}), encoding="utf-8"
+            )
+            review_rows = [
+                {"song_id": "song-010", "clip_id": "song-010-1", "status": "PASS"},
+                {"song_id": "song-017", "clip_id": "song-017-1", "status": "REJECTED"},
+            ]
+            (source / "reports" / "svs_audio_review.json").write_text(
+                json.dumps({"status": "APPROVED_WITH_EXCLUSIONS", "songs": review_rows}), encoding="utf-8"
+            )
+            for song_id in ("song-010", "song-017"):
+                song_dir = source / "songs" / song_id
+                song_dir.mkdir()
+                audio_path = song_dir / "source.wav"
+                with wave.open(str(audio_path), "wb") as handle:
+                    handle.setnchannels(2)
+                    handle.setsampwidth(2)
+                    handle.setframerate(44100)
+                    handle.writeframes(b"\0\0\0\0")
+                (song_dir / "source.json").write_text(
+                    json.dumps({"canonical_source_path": str(audio_path), "canonical_source_sha256": sha256_file(audio_path)}),
+                    encoding="utf-8",
+                )
+                (song_dir / "accepted_windows.json").write_text(
+                    json.dumps([{"start_sec": 0.0, "end_sec": 1.0}]), encoding="utf-8"
+                )
+
+            result = _freeze_expanded_source(source, base)
+
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["accepted_song_ids"], ["song-010"])
+        self.assertEqual(result["excluded_song_ids"], ["song-017"])
+
+    def test_expanded_baseline_rows_keep_semantic_fields_when_rebased(self):
+        from coverprep.dataset_finalize import _load_base_training_rows
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            base = Path(temporary_directory)
+            (base / "metadata").mkdir(parents=True)
+            row = {
+                "record_type": "training",
+                "name": "v4_song001__w001",
+                "song_id": "song-001",
+                "ph_seq": "ɕː N",
+                "ph_dur": "0.4 0.6",
+                "ph_num": "2",
+                "note_seq": "C4",
+                "note_dur": "1.0",
+                "note_slur": "0",
+                "wav_path": "dataset/raw/wavs/v4_song001__w001.wav",
+                "wav_sha256": "stable",
+                "source_audio_path": "D:/source.wav",
+            }
+            (base / "metadata" / "manifest.jsonl").write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+            rows = _load_base_training_rows(base)
+
+        self.assertEqual(rows[0]["ph_seq"], "ɕː N")
+        self.assertEqual(rows[0]["ph_dur"], "0.4 0.6")
+        self.assertEqual(rows[0]["wav_path"], "dataset/raw/wavs/v4_song001__w001.wav")
+
+    def test_expanded_generic47_normalization_changes_only_ph_seq(self):
+        from coverprep.dataset_finalize import _normalize_expanded_items
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            base = root / "v13"
+            target = root / "v14"
+            (base / "metadata").mkdir(parents=True)
+            (base / "reports").mkdir(parents=True)
+            (target / "reports").mkdir(parents=True)
+            (base / "metadata" / "generic47_phone_set.json").write_text(
+                json.dumps({"phones": ["ɕ", "N", "t", "ts", "ɯ"] + [f"p{i}" for i in range(42)]}, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            (base / "metadata" / "generic47_phone_normalization.json").write_text(
+                json.dumps({"ɕː": "ɕ", "ŋ": "N", "tː": "t", "tsː": "ts", "ɯː": "ɯ"}, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            dictionary = root / "dictionary.txt"
+            dictionary.write_text("ɕ\nN\nt\nts\nɯ\n", encoding="utf-8")
+            (base / "reports" / "generic47_compatibility.json").write_text(
+                json.dumps({"manifest": {"dictionary_path": str(dictionary)}}, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            item = {
+                "name": "v4_song010__w001",
+                "ph_seq": "ɕː ŋ tː tsː ɯː",
+                "ph_dur": "0.1 0.2 0.3 0.4 0.5",
+                "ph_num": "5",
+                "note_seq": "C4",
+                "note_dur": "1.5",
+            }
+
+            result, report = _normalize_expanded_items([item], base, target)
+
+        self.assertEqual(result[0]["ph_seq"], "ɕ N t ts ɯ")
+        self.assertEqual(result[0]["ph_dur"], item["ph_dur"])
+        self.assertEqual(result[0]["ph_num"], item["ph_num"])
+        self.assertEqual(result[0]["note_seq"], item["note_seq"])
+        self.assertEqual(report["runtime_vocab_size"], 48)
+        self.assertEqual(report["unknown_phone_count"], 0)
+
     def test_training_csv_row_contains_only_official_six_fields(self):
         from coverprep.dataset_finalize import TRAINING_TRANSCRIPTION_FIELDS, build_training_csv_row
 

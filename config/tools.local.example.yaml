@@ -22,3 +22,16 @@ g2p:
   cwd: <GPT_SOVITS_ROOT>
 diffsinger:
   root: <HARUKA_SVS_TOOLS_ROOT>/DiffSinger
+
+vocal2midi:
+  # 只有任务 job.yaml 显式设置 enabled: true 才会启动自动前端。
+  enabled: false
+  root: D:/Vocal2Midi-Local
+  python: D:/Vocal2Midi-Local/.venv/Scripts/python.exe
+  device: dml
+  language: ja
+  lyric_output_mode: kana
+  slice_min_sec: 5.0
+  slice_max_sec: 10.0
+  tempo: 120.0
+  output_pitch_curve: true

@@ -470,6 +470,30 @@ class TrainingDatasetTests(unittest.TestCase):
             self.assertEqual(report["songs"]["song-001"]["status"], "MISSING")
             self.assertEqual(report["issues"][0]["type"], "LYRICS_FILE_MISSING")
 
+    def test_lyrics_input_check_marks_header_only_template_pending(self):
+        from coverprep.training_dataset import check_lyrics_inputs
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            lyrics = root / "songs" / "song-010" / "lyrics"
+            lyrics.mkdir(parents=True)
+            (lyrics / "ocr_draft.tsv").write_text(
+                "phrase_id\tsurface\treading\tnote_count\tsource_image\treview_status\n",
+                encoding="utf-8",
+            )
+            sources = root / "reports" / "lyrics_sources.json"
+            sources.parent.mkdir(parents=True)
+            sources.write_text(
+                json.dumps({"songs": {"song-010": {"local_target": "songs/song-010/lyrics/ocr_draft.tsv"}}}),
+                encoding="utf-8",
+            )
+
+            report = check_lyrics_inputs(root, sources_path=sources, song_ids=["song-010"])
+
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertEqual(report["songs"]["song-010"]["status"], "BLOCKED")
+        self.assertEqual(report["issues"][0]["type"], "LYRICS_FILE_EMPTY")
+
     def test_cli_exposes_dataset_lyrics_command(self):
         from coverprep.cli import build_parser
 
@@ -889,6 +913,253 @@ class TrainingDatasetTests(unittest.TestCase):
         self.assertEqual(args.source_dataset, "v1")
         self.assertEqual(args.target_dataset, "v2")
         self.assertEqual(args.policy, "majority")
+
+    def test_cli_exposes_expanded_dataset_commands_and_game_extract_options(self):
+        from coverprep.cli import build_parser
+
+        expand = build_parser().parse_args(
+            [
+                "dataset",
+                "expand-init",
+                "--base-dataset",
+                "v13",
+                "--dataset",
+                "v14.work",
+                "--reviewed-manifest",
+                "reviewed.jsonl",
+                "--source-registry",
+                "sources.json",
+                "--song-id",
+                "song-010",
+            ]
+        )
+        finalize = build_parser().parse_args(
+            [
+                "dataset",
+                "finalize-expanded",
+                "--source-dataset",
+                "v14.work",
+                "--base-dataset",
+                "v13",
+                "--target-dataset",
+                "v14",
+            ]
+        )
+        prepare = build_parser().parse_args(
+            [
+                "dataset",
+                "prepare",
+                "--dataset",
+                "v14.work",
+                "--game-root",
+                "game",
+                "--extract-game",
+                "--game-model",
+                "model.pt",
+            ]
+        )
+
+        self.assertEqual(expand.dataset_command, "expand-init")
+        self.assertEqual(expand.base_dataset, "v13")
+        self.assertEqual(expand.song_ids, ["song-010"])
+        self.assertEqual(finalize.dataset_command, "finalize-expanded")
+        self.assertEqual(finalize.base_dataset, "v13")
+        self.assertTrue(prepare.extract_game)
+        self.assertEqual(prepare.game_model, Path("model.pt"))
+
+    def test_initialize_expanded_dataset_copies_base_snapshot_and_writes_header_only_template(self):
+        from coverprep.training_dataset import initialize_expanded_dataset
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = root / "v13"
+            (base / "dataset" / "raw" / "wavs").mkdir(parents=True)
+            (base / "metadata").mkdir(parents=True)
+            (base / "reports").mkdir(parents=True)
+            (base / "dataset" / "raw" / "transcriptions.csv").write_text(
+                "name,ph_seq,ph_dur,ph_num,note_seq,note_dur\nbase__w001,a,1,1,C4,1\n",
+                encoding="utf-8",
+            )
+            (base / "metadata" / "manifest.jsonl").write_text(
+                json.dumps({"record_type": "training", "name": "base__w001"}) + "\n",
+                encoding="utf-8",
+            )
+            (base / "dataset" / "raw" / "wavs" / "base__w001.wav").write_bytes(b"base wav")
+            source = root / "source.wav"
+            with wave.open(str(source), "wb") as handle:
+                handle.setnchannels(2)
+                handle.setsampwidth(2)
+                handle.setframerate(44100)
+                handle.writeframes(b"\x00\x00\x00\x00" * 4410)
+            source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+            registry = root / "sources.json"
+            registry.write_text(
+                json.dumps(
+                    [
+                        {
+                            "song_id": "song-010",
+                            "title": "fixture",
+                            "source_path": str(source),
+                            "source_sha256": source_hash,
+                            "duration_sec": 0.1,
+                            "source_sample_rate": 44100,
+                            "source_channels": 2,
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            reviewed = root / "reviewed.jsonl"
+            reviewed.write_text(
+                json.dumps(
+                    {
+                        "song_id": "song-010",
+                        "clip_id": "song-010-0001",
+                        "start_sec": 0.0,
+                        "end_sec": 0.1,
+                        "status": "accepted",
+                        "singer_status": "confirmed_haruka",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            target = root / "v14.work"
+            report = initialize_expanded_dataset(
+                base,
+                target,
+                [registry],
+                reviewed,
+                song_ids=["song-010"],
+            )
+
+            self.assertEqual(report["status"], "EXPANSION_INITIALIZED")
+            self.assertTrue((target / "dataset" / "raw" / "wavs" / "base__w001.wav").is_file())
+            self.assertTrue((target / "metadata" / "base_v13_snapshot.json").is_file())
+            template = target / "songs" / "song-010" / "lyrics" / "ocr_draft.tsv"
+            self.assertEqual(
+                template.read_text(encoding="utf-8"),
+                "phrase_id\tsurface\treading\tnote_count\tsource_image\treview_status\n",
+            )
+            windows = json.loads((target / "songs" / "song-010" / "accepted_windows.json").read_text(encoding="utf-8"))
+            self.assertEqual(windows[0]["clip_id"], "song-010-0001")
+            self.assertEqual(windows[0]["svs_review_status"], "PENDING_USER_AUDIO_REVIEW")
+            self.assertEqual(report["selected_song_ids"], ["song-010"])
+
+    def test_normalize_supplemental_source_converts_to_stereo_44100_pcm16_without_changing_original(self):
+        from coverprep.training_dataset import normalize_supplemental_source
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source.wav"
+            with wave.open(str(source), "wb") as handle:
+                handle.setnchannels(1)
+                handle.setsampwidth(2)
+                handle.setframerate(48000)
+                handle.writeframes(b"\x00\x00" * 4800)
+            original_bytes = source.read_bytes()
+            destination = root / "canonical.wav"
+
+            result = normalize_supplemental_source(source, destination)
+
+            self.assertEqual(result["sample_rate"], 44100)
+            self.assertEqual(result["channels"], 2)
+            self.assertEqual(result["sample_width"], 2)
+            self.assertEqual(source.read_bytes(), original_bytes)
+            self.assertEqual(result["original_sha256"], hashlib.sha256(original_bytes).hexdigest())
+
+    def test_prepare_assets_can_extract_missing_game_score_with_explicit_model(self):
+        from coverprep.training_dataset import prepare_song_assets
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dataset = root / "dataset"
+            song_dir = dataset / "songs" / "song-010"
+            song_dir.mkdir(parents=True)
+            source = root / "source.wav"
+            with wave.open(str(source), "wb") as handle:
+                handle.setnchannels(2)
+                handle.setsampwidth(2)
+                handle.setframerate(44100)
+                handle.writeframes(b"\x00\x00\x00\x00" * 4410)
+            source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+            (song_dir / "source.json").write_text(
+                json.dumps(
+                    {
+                        "song_id": "song-010",
+                        "source_path": str(source),
+                        "source_sha256": source_hash,
+                        "duration_sec": 0.1,
+                        "sample_rate": 44100,
+                        "channels": 2,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (song_dir / "accepted_windows.json").write_text(
+                json.dumps([{"clip_id": "song-010-0001", "start_sec": 0.0, "end_sec": 0.1}]),
+                encoding="utf-8",
+            )
+            game_root = root / "game"
+            model = root / "GAME-model.pt"
+            game_root.mkdir()
+            model.write_bytes(b"model")
+
+            def fake_game_run(command, **kwargs):
+                (game_root / "song-010.mid").write_bytes(b"not-a-midi")
+                return type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+
+            with patch("coverprep.training_dataset.subprocess.run", side_effect=fake_game_run) as run:
+                report = prepare_song_assets(
+                    dataset,
+                    game_root,
+                    song_ids=["song-010"],
+                    extract_game=True,
+                    game_model=model,
+                    game_python=Path("game-python"),
+                    game_tool_root=root / "GAME",
+                )
+
+            self.assertEqual(report["status"], "BLOCKED")
+            run.assert_called_once()
+            command = run.call_args.args[0]
+            self.assertIn("extract", command)
+            self.assertIn(str(model), command)
+            self.assertTrue((song_dir / "score" / "game_extract_report.json").is_file())
+
+    def test_game_extract_rehomes_source_stem_outputs_to_song_id(self):
+        from coverprep.training_dataset import _run_game_extract
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source.wav"
+            model = root / "model.pt"
+            source.write_bytes(b"wav")
+            model.write_bytes(b"model")
+            game_root = root / "game"
+
+            def fake_game_run(command, **kwargs):
+                output_dir = Path(command[command.index("--output-dir") + 1])
+                output_dir.mkdir(parents=True, exist_ok=True)
+                (output_dir / "source.mid").write_bytes(b"midi")
+                (output_dir / "source.txt").write_text("C4\n", encoding="utf-8")
+                (output_dir / "source.csv").write_text("time,note\n", encoding="utf-8")
+                return type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+
+            with patch("coverprep.training_dataset.subprocess.run", side_effect=fake_game_run):
+                report = _run_game_extract(
+                    source,
+                    game_root,
+                    game_model=model,
+                    game_tool_root=root / "tool",
+                    output_stem="song-010",
+                )
+
+            self.assertEqual(report["status"], "PASSED")
+            self.assertTrue((game_root / "song-010.mid").is_file())
+            self.assertTrue((game_root / "song-010.txt").is_file())
+            self.assertTrue((game_root / "song-010.csv").is_file())
 
 
 if __name__ == "__main__":

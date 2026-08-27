@@ -51,6 +51,15 @@ python -m coverprep --help
 
 `config/coverprep_v3.defaults.json`、Profiles 和模板只保留相对路径或空占位符；实际 MFA、DiffSinger、MSST、GAME、GPT-SoVITS 路径必须在本机任务配置中填写。
 
+Vocal2Midi 接入保持为可选的外部前端。它的源码、模型、缓存和虚拟环境不属于本仓库；`coverprep` 只通过 `shell=False` 调用独立解释器 `D:/Vocal2Midi-Local/.venv/Scripts/python.exe`。复制 `config/tools.local.example.yaml` 为本机配置后，只有在单曲 `job.yaml` 中显式设置 `vocal2midi.enabled: true`，且 `mode: guide` 同时缺少 `score` 与 `lyrics` 时才会运行。目标仓库使用独立的 `coverprep_env`，并在其中安装 `requirements-coverprep.txt`（含 `praat-parselmouth`）；Vocal2Midi 继续使用自己的 `.venv`。
+
+```yaml
+vocal2midi:
+  enabled: true
+```
+
+自动生成的 MIDI、逐音符 CSV、歌词候选、USTX、F0 和进程日志会保存在作业的 `integrations/vocal2midi/` 下；映射、发音、自动歌词和时序问题进入审核队列，人工审核前 QA 保持 `BLOCKED`。
+
 批处理入口会优先使用仓库旁的 `coverprep_env`，不存在时回退到当前 Python：
 
 ```powershell

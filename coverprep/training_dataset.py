@@ -11,6 +11,8 @@ import csv
 import hashlib
 import json
 import shutil
+import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -21,6 +23,27 @@ from .io import copy_file, file_metadata, load_json, load_yaml, sha256_file, wri
 
 class TrainingDatasetError(RuntimeError):
     """训练集来源或接口不满足冻结规则。"""
+
+
+SUPPLEMENTAL_LYRICS_FIELDS = (
+    "phrase_id",
+    "surface",
+    "reading",
+    "note_count",
+    "source_image",
+    "review_status",
+)
+DEFAULT_SUPPLEMENTAL_SONG_IDS = [
+    "song-010",
+    "song-017",
+    "song-018",
+    "song-019",
+    "song-020",
+    "song-021",
+    "song-022",
+    "song-023",
+    "song-024",
+]
 
 
 @dataclass(frozen=True)
@@ -41,6 +64,148 @@ def _absolute_path(value: str | Path, base: Path | None = None) -> Path:
     if not path.is_absolute() and base is not None:
         path = base / path
     return path.resolve()
+
+
+def _tree_sha256(root: Path) -> str:
+    """按相对路径和文件字节生成稳定目录哈希，供跨版本来源审计使用。"""
+    digest = hashlib.sha256()
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+        relative = path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest()
+
+
+def normalize_supplemental_source(
+    source: Path,
+    destination: Path,
+    *,
+    ffmpeg_path: Path | None = None,
+) -> dict[str, Any]:
+    """把补充歌曲源固定成 44.1 kHz 双声道 PCM16，并保留原源不变。"""
+    source = source.resolve()
+    destination = destination.resolve()
+    if not source.is_file():
+        raise TrainingDatasetError(f"补充歌曲源音频不存在: {source}")
+    if source == destination:
+        raise TrainingDatasetError("规范源路径不能覆盖原始源音频")
+    original = file_metadata(source)
+    original_hash = sha256_file(source)
+    needs_transcode = (
+        original.get("sample_rate") != 44100
+        or original.get("channels") != 2
+        or original.get("sample_width") != 2
+        or source.suffix.lower() != ".wav"
+    )
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if not needs_transcode:
+        copy_file(source, destination)
+    else:
+        executable = str(ffmpeg_path or shutil.which("ffmpeg") or "")
+        if not executable:
+            raise TrainingDatasetError("缺少 ffmpeg，无法把补充源规范化为 44.1 kHz 双声道 PCM16")
+        completed = subprocess.run(
+            [
+                executable,
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-y",
+                "-i",
+                str(source),
+                "-ar",
+                "44100",
+                "-ac",
+                "2",
+                "-c:a",
+                "pcm_s16le",
+                str(destination),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        # 本机 WinGet 包装器可能在成功写出 WAV 后返回访问冲突码；最终以输出
+        # 文件可解码且格式契约通过为准，同时把返回码保留到来源报告中。
+        if not destination.is_file():
+            message = (completed.stderr or completed.stdout or "ffmpeg 未生成输出").strip()
+            raise TrainingDatasetError(f"补充源音频规范化失败: {source}: {message}")
+    canonical = file_metadata(destination)
+    if (
+        canonical.get("sample_rate"),
+        canonical.get("channels"),
+        canonical.get("sample_width"),
+    ) != (44100, 2, 2):
+        raise TrainingDatasetError(f"规范源音频格式不符: {destination}: {canonical}")
+    return {
+        "path": str(destination),
+        "sha256": sha256_file(destination),
+        "original_path": str(source),
+        "original_sha256": original_hash,
+        "original_duration_sec": original.get("duration"),
+        "original_sample_rate": original.get("sample_rate"),
+        "original_channels": original.get("channels"),
+        "sample_rate": canonical.get("sample_rate"),
+        "channels": canonical.get("channels"),
+        "sample_width": canonical.get("sample_width"),
+        "frames": canonical.get("frames"),
+        "duration_sec": canonical.get("duration"),
+        "subtype": canonical.get("subtype"),
+        "ffmpeg_returncode": completed.returncode if needs_transcode else 0,
+    }
+
+
+def _load_supplemental_source_registry(paths: list[Path]) -> dict[str, dict[str, Any]]:
+    """读取一个或多个 JSON 源登记，重复歌曲必须提供完全一致的来源。"""
+    sources: dict[str, dict[str, Any]] = {}
+    for raw_path in paths:
+        path = raw_path.resolve()
+        payload = load_json(path, None)
+        if isinstance(payload, dict):
+            values = payload.get("songs", [])
+        else:
+            values = payload
+        if not isinstance(values, list):
+            raise TrainingDatasetError(f"补充源登记必须是数组或包含 songs 数组的对象: {path}")
+        for value in values:
+            if not isinstance(value, dict):
+                raise TrainingDatasetError(f"补充源登记存在非对象条目: {path}")
+            song_id = str(value.get("song_id") or "").strip()
+            if not song_id:
+                raise TrainingDatasetError(f"补充源登记缺少 song_id: {path}")
+            source_value = value.get("source_copy") or value.get("source_path") or ""
+            source_path = _absolute_path(str(source_value), path.parent)
+            expected = str(value.get("source_sha256") or "").strip().lower()
+            if not source_path.is_file():
+                raise TrainingDatasetError(f"补充源登记指向的文件不存在: {source_path}")
+            actual = sha256_file(source_path)
+            if expected and expected != actual:
+                raise TrainingDatasetError(f"补充源哈希不匹配: {song_id}: expected={expected}, actual={actual}")
+            normalized = {
+                **value,
+                "song_id": song_id,
+                "source_path": str(source_path),
+                "source_sha256": actual,
+                "source_registry_path": str(path),
+            }
+            previous = sources.get(song_id)
+            if previous and (
+                previous.get("source_path") != normalized["source_path"]
+                or previous.get("source_sha256") != normalized["source_sha256"]
+            ):
+                raise TrainingDatasetError(f"补充源登记存在冲突: {song_id}")
+            sources[song_id] = normalized
+    return sources
+
+
+def _write_blank_lyrics_template(path: Path) -> None:
+    """只写标准表头，不制造歌词行、句界或音符数。"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        csv.DictWriter(handle, fieldnames=SUPPLEMENTAL_LYRICS_FIELDS, delimiter="\t").writeheader()
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -1169,6 +1334,15 @@ def check_lyrics_inputs(
                             "message": str(exc),
                         }
                     )
+                if not rows and not any(issue.get("type") == "LYRICS_TSV_INVALID" for issue in song_issues):
+                    song_issues.append(
+                        {
+                            "type": "LYRICS_FILE_EMPTY",
+                            "song_id": song_id,
+                            "path": str(target.resolve()),
+                            "message": "歌词 TSV 只有表头或没有有效行，等待用户填写本地歌词",
+                        }
+                    )
                 for row in rows:
                     if not row.get("surface") or not row.get("reading") or int(row.get("note_count", 0)) <= 0:
                         song_issues.append(
@@ -2108,11 +2282,266 @@ def apply_dataset_gap_repairs(
     return apply_report
 
 
+def initialize_expanded_dataset(
+    base_dataset: Path,
+    target_dataset: Path,
+    source_registry_paths: list[Path],
+    reviewed_manifest_path: Path,
+    *,
+    song_ids: list[str] | None = None,
+    ffmpeg_path: Path | None = None,
+) -> dict[str, Any]:
+    """从 v13 封存包创建补充歌曲工作区，不解锁任何候选标注。"""
+    base_dataset = base_dataset.resolve()
+    target_dataset = target_dataset.resolve()
+    if not base_dataset.is_dir():
+        raise TrainingDatasetError(f"v13 基线目录不存在: {base_dataset}")
+    if target_dataset.exists():
+        raise TrainingDatasetError(f"v14 目标目录已存在，拒绝覆盖: {target_dataset}")
+    manifest_path = base_dataset / "metadata" / "manifest.jsonl"
+    wav_root = base_dataset / "dataset" / "raw" / "wavs"
+    if not manifest_path.is_file() or not wav_root.is_dir():
+        raise TrainingDatasetError(f"v13 缺少 manifest 或 WAV 根目录: {base_dataset}")
+
+    selected = list(song_ids or DEFAULT_SUPPLEMENTAL_SONG_IDS)
+    if len(set(selected)) != len(selected):
+        raise TrainingDatasetError("补充歌曲列表存在重复 song_id")
+    sources = _load_supplemental_source_registry([Path(path) for path in source_registry_paths])
+    reviewed_rows = _read_jsonl(reviewed_manifest_path.resolve())
+    reviewed_by_song: dict[str, list[dict[str, Any]]] = {song_id: [] for song_id in selected}
+    for row in reviewed_rows:
+        song_id = str(row.get("song_id") or "").strip()
+        if song_id not in reviewed_by_song:
+            continue
+        if str(row.get("status") or "").strip().lower() != "accepted":
+            continue
+        singer_status = str(row.get("singer_status") or "").strip()
+        if singer_status and singer_status != "confirmed_haruka":
+            continue
+        reviewed_by_song[song_id].append(row)
+    missing_sources = [song_id for song_id in selected if song_id not in sources]
+    if missing_sources:
+        raise TrainingDatasetError("补充源登记缺少: " + ", ".join(missing_sources))
+    missing_windows = [song_id for song_id in selected if not reviewed_by_song[song_id]]
+    if missing_windows:
+        raise TrainingDatasetError("reviewed manifest 没有 accepted Haruka 窗口: " + ", ".join(missing_windows))
+
+    # 复制 v13 的数据和缓存作为只读基线，排除旧包与运行状态，避免误把旧包嵌套进新包。
+    def ignore_base(_directory: str, names: list[str]) -> set[str]:
+        ignored = {"packages", "UPLOAD_SHA256SUMS", "server_preflight.py", "dataset_state.json"}
+        ignored.update({"package.json", "package_preflight.json", "package_preflight_unpacked.json"})
+        return {name for name in names if name in ignored}
+
+    base_tree_hash = _tree_sha256(base_dataset)
+    base_manifest_hash = sha256_file(manifest_path)
+    base_package = base_dataset / "packages"
+    base_package_hashes = {
+        path.name: sha256_file(path)
+        for path in base_package.glob("*.zip")
+        if path.is_file()
+    }
+    shutil.copytree(base_dataset, target_dataset, ignore=ignore_base)
+
+    expansion_songs: dict[str, dict[str, Any]] = {}
+    review_rows: list[dict[str, Any]] = []
+    lyrics_sources: dict[str, dict[str, Any]] = {}
+    for song_id in selected:
+        source = sources[song_id]
+        canonical_path = target_dataset / "sources" / song_id / "source.wav"
+        normalized = normalize_supplemental_source(Path(source["source_path"]), canonical_path, ffmpeg_path=ffmpeg_path)
+        source_record = {
+            "song_id": song_id,
+            "title": str(source.get("title") or ""),
+            "source_path": normalized["path"],
+            "source_sha256": normalized["sha256"],
+            "canonical_source_path": normalized["path"],
+            "canonical_source_sha256": normalized["sha256"],
+            "original_source_path": normalized["original_path"],
+            "original_source_sha256": normalized["original_sha256"],
+            "original_duration_sec": normalized["original_duration_sec"] if normalized["original_duration_sec"] is not None else source.get("duration_sec"),
+            "original_sample_rate": normalized["original_sample_rate"] if normalized["original_sample_rate"] is not None else source.get("source_sample_rate"),
+            "original_channels": normalized["original_channels"] if normalized["original_channels"] is not None else source.get("source_channels"),
+            "ffmpeg_returncode": normalized.get("ffmpeg_returncode", 0),
+            "duration_sec": normalized["duration_sec"],
+            "sample_rate": normalized["sample_rate"],
+            "channels": normalized["channels"],
+            "sample_width": normalized["sample_width"],
+            "source_registry_path": source["source_registry_path"],
+            "source_status": "PENDING_USER_AUDIO_REVIEW",
+            "svs_review_status": "PENDING_USER_AUDIO_REVIEW",
+        }
+        song_dir = target_dataset / "songs" / song_id
+        for directory in ("lyrics", "score", "assets/wavs", "reports"):
+            (song_dir / directory).mkdir(parents=True, exist_ok=True)
+        write_json(song_dir / "source.json", source_record)
+        windows: list[dict[str, Any]] = []
+        for row in sorted(reviewed_by_song[song_id], key=lambda value: (float(value.get("start_sec", 0.0)), str(value.get("clip_id", "")))):
+            window = {
+                "clip_id": str(row.get("clip_id") or f"{song_id}-{len(windows) + 1:04d}"),
+                "song_id": song_id,
+                "start_sec": float(row.get("start_sec", 0.0)),
+                "end_sec": float(row.get("end_sec", 0.0)),
+                "duration_sec": float(row.get("end_sec", 0.0)) - float(row.get("start_sec", 0.0)),
+                "source_audio_path": normalized["path"],
+                "source_sha256": normalized["sha256"],
+                "source_original_path": normalized["original_path"],
+                "source_original_sha256": normalized["original_sha256"],
+                "status": "accepted_source_window",
+                "singer_status": str(row.get("singer_status") or "confirmed_haruka"),
+                "split": str(row.get("split") or "train"),
+                "svs_review_status": "PENDING_USER_AUDIO_REVIEW",
+            }
+            windows.append(window)
+            review_rows.append(
+                {
+                    "song_id": song_id,
+                    "clip_id": window["clip_id"],
+                    "source_path": normalized["path"],
+                    "start_sec": window["start_sec"],
+                    "end_sec": window["end_sec"],
+                    "checks": ["quiet", "consonants", "pronunciation", "harmony_residual", "boundary"],
+                    "status": "PENDING_USER_AUDIO_REVIEW",
+                }
+            )
+        write_json(song_dir / "accepted_windows.json", windows)
+        # 扩展歌曲初始没有人工排除区间或发音锁；保留空文件让后续
+        # note-candidates/finalize 使用同一套目录契约，而不是临时猜测缺失值。
+        write_json(song_dir / "excluded_intervals.batch_repair.json", [])
+        write_json(song_dir / "lyrics" / "pronunciation_locks.json", [])
+        _write_blank_lyrics_template(song_dir / "lyrics" / "ocr_draft.tsv")
+        write_json(song_dir / "state.json", {"stage": "expansion_init", "status": "PENDING_USER_AUDIO_REVIEW"})
+        expansion_songs[song_id] = {
+            "song_id": song_id,
+            "title": source_record["title"],
+            "window_count": len(windows),
+            "accepted_duration_sec": sum(float(item["duration_sec"]) for item in windows),
+            "source": source_record,
+            "audio_review_status": "PENDING_USER_AUDIO_REVIEW",
+            "lyrics_template": str((song_dir / "lyrics" / "ocr_draft.tsv").resolve()),
+        }
+        lyrics_sources[song_id] = {
+            "local_target": str((song_dir / "lyrics" / "ocr_draft.tsv").relative_to(target_dataset).as_posix()),
+            "source_url": "",
+            "source_type": "LOCAL_USER_TSV",
+        }
+
+    snapshot = {
+        "base_dataset": str(base_dataset),
+        "base_tree_sha256": base_tree_hash,
+        "base_manifest_sha256": base_manifest_hash,
+        "base_package_sha256": base_package_hashes,
+        "base_record_count": sum(1 for row in _read_jsonl(manifest_path) if row.get("record_type") == "training"),
+    }
+    write_json(target_dataset / "metadata" / "base_v13_snapshot.json", snapshot)
+    write_json(target_dataset / "metadata" / "expansion_sources.json", {"songs": expansion_songs})
+    write_json(target_dataset / "reports" / "svs_audio_review.json", {"status": "PENDING_USER_AUDIO_REVIEW", "songs": review_rows})
+    write_json(target_dataset / "reports" / "lyrics_sources.json", {"songs": lyrics_sources})
+    report = {
+        "status": "EXPANSION_INITIALIZED",
+        "base_dataset": str(base_dataset),
+        "target_dataset": str(target_dataset),
+        "selected_song_ids": selected,
+        "songs": expansion_songs,
+        "base_v13_snapshot": snapshot,
+        "next_step": "完成 SVS 重听并填写各歌曲 lyrics/ocr_draft.tsv 后再运行 dataset prepare",
+        "training_started": False,
+        "inference_started": False,
+    }
+    write_json(target_dataset / "reports" / "expansion_init.json", report)
+    write_json(
+        target_dataset / "dataset_state.json",
+        {
+            "status": "EXPANSION_INITIALIZED_PENDING_REVIEW",
+            "stage": "expansion_init",
+            "base_v13": str(base_dataset),
+            "selected_song_ids": selected,
+            "training_started": False,
+            "inference_started": False,
+        },
+    )
+    return report
+
+
+def _run_game_extract(
+    source_path: Path,
+    game_root: Path,
+    *,
+    game_model: Path,
+    game_python: Path | None = None,
+    game_tool_root: Path | None = None,
+    language: str = "ja",
+    num_workers: int = 0,
+    output_stem: str | None = None,
+) -> dict[str, Any]:
+    """调用官方 GAME extract，仅生成谱面候选，不进入训练或歌声推理。"""
+    if not game_model.is_file():
+        raise TrainingDatasetError(f"GAME 模型不存在: {game_model}")
+    game_root = game_root.resolve()
+    game_root.mkdir(parents=True, exist_ok=True)
+    tool_root = (game_tool_root or game_model.parent).resolve()
+    python = str(game_python or sys.executable)
+    output_dir = game_root / output_stem if output_stem else game_root
+    output_dir.mkdir(parents=True, exist_ok=True)
+    command = [
+        python,
+        str(tool_root / "infer.py"),
+        "extract",
+        str(source_path),
+        "-m",
+        str(game_model.resolve()),
+        "--language",
+        language,
+        "--num-workers",
+        str(int(num_workers)),
+        "--output-formats",
+        "mid,txt,csv",
+        "--output-dir",
+        str(output_dir),
+    ]
+    completed = subprocess.run(
+        command,
+        cwd=str(tool_root),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    # GAME 对单文件输入以原始文件名（通常是 source）命名输出；
+    # 统一重定位到 song_id 文件名，供 prepare_song_assets 和后续审核读取。
+    generated: dict[str, str] = {}
+    if output_stem:
+        for suffix in (".mid", ".txt", ".csv"):
+            expected = game_root / f"{output_stem}{suffix}"
+            if not expected.is_file():
+                candidates = sorted(output_dir.glob(f"*{suffix}"))
+                if len(candidates) == 1:
+                    copy_file(candidates[0], expected)
+            if expected.is_file():
+                generated[suffix[1:]] = str(expected.resolve())
+    report = {
+        "status": "PASSED" if completed.returncode == 0 else "BLOCKED",
+        "command": command,
+        "returncode": completed.returncode,
+        "stdout": completed.stdout[-4000:],
+        "stderr": completed.stderr[-4000:],
+        "source_path": str(source_path.resolve()),
+        "game_model": str(game_model.resolve()),
+        "output_dir": str(output_dir.resolve()),
+        "generated_outputs": generated,
+    }
+    return report
+
+
 def prepare_song_assets(
     dataset_root: Path,
     game_root: Path,
     *,
     song_ids: list[str] | None = None,
+    extract_game: bool = False,
+    game_model: Path | None = None,
+    game_python: Path | None = None,
+    game_tool_root: Path | None = None,
+    game_language: str = "ja",
+    game_num_workers: int = 0,
 ) -> dict[str, Any]:
     """准备 v4 派生 WAV、GAME 自动 MIDI 和每首歌的资产清单。
 
@@ -2124,8 +2553,10 @@ def prepare_song_assets(
     game_root = game_root.resolve()
     if not dataset_root.is_dir():
         raise TrainingDatasetError(f"训练集根目录不存在，请先执行 dataset init: {dataset_root}")
-    if not game_root.is_dir():
+    if not game_root.is_dir() and not extract_game:
         raise TrainingDatasetError(f"GAME 自动谱面目录不存在: {game_root}")
+    if extract_game:
+        game_root.mkdir(parents=True, exist_ok=True)
 
     songs_root = dataset_root / "songs"
     available = sorted(
@@ -2151,10 +2582,50 @@ def prepare_song_assets(
         source = load_json(song_dir / "source.json", {}) or {}
         source_path = Path(str(source.get("source_path", "")))
         expected_hash = str(source.get("source_sha256", "")).lower()
-        if not source_path.is_file() or sha256_file(source_path) != expected_hash:
-            raise TrainingDatasetError(f"{song_id} 的冻结源音频哈希校验失败: {source_path}")
+        source_metadata = file_metadata(source_path) if source_path.is_file() else {}
+        if (
+            not source_path.is_file()
+            or sha256_file(source_path) != expected_hash
+            or (source_metadata.get("sample_rate"), source_metadata.get("channels"), source_metadata.get("sample_width"))
+            != (44100, 2, 2)
+        ):
+            original_path = Path(str(source.get("original_source_path") or source_path))
+            canonical_path = Path(str(source.get("canonical_source_path") or (dataset_root / "sources" / song_id / "source.wav")))
+            normalized = normalize_supplemental_source(original_path, canonical_path)
+            source_path = Path(normalized["path"])
+            expected_hash = normalized["sha256"]
+            source.update(
+                {
+                    "source_path": normalized["path"],
+                    "source_sha256": normalized["sha256"],
+                    "canonical_source_path": normalized["path"],
+                    "canonical_source_sha256": normalized["sha256"],
+                    "sample_rate": normalized["sample_rate"],
+                    "channels": normalized["channels"],
+                    "sample_width": normalized["sample_width"],
+                    "duration_sec": normalized["duration_sec"],
+                    "original_source_path": normalized["original_path"],
+                    "original_source_sha256": normalized["original_sha256"],
+                }
+            )
+            write_json(song_dir / "source.json", source)
         windows = load_json(song_dir / "accepted_windows.json", []) or []
         score_source = game_root / f"{song_id}.mid"
+        game_extract_report: dict[str, Any] | None = None
+        if not score_source.is_file() and extract_game:
+            if game_model is None:
+                raise TrainingDatasetError(f"缺少 {song_id} 的 GAME 模型参数")
+            game_extract_report = _run_game_extract(
+                source_path,
+                game_root,
+                game_model=game_model.resolve(),
+                game_python=game_python,
+                game_tool_root=game_tool_root,
+                language=game_language,
+                num_workers=game_num_workers,
+                output_stem=song_id,
+            )
+            write_json(song_dir / "score" / "game_extract_report.json", game_extract_report)
         if not score_source.is_file():
             raise TrainingDatasetError(f"缺少 {song_id} 的 GAME 自动 MIDI: {score_source}")
         score_dir = song_dir / "score"
@@ -2250,6 +2721,7 @@ def prepare_song_assets(
             "derived_wav_count": len(records),
             "score_note_count": len(load_json(score_dir / "auto_notes.json", []) or []),
             "score_issue_count": len(score_issues),
+            "game_extract": game_extract_report or {},
             "issues": song_issues,
         }
         write_json(song_dir / "assets" / "report.json", report)
@@ -2266,6 +2738,8 @@ def prepare_song_assets(
         "game_root": str(game_root),
         "songs": song_reports,
         "issues": all_issues,
+        "training_started": False,
+        "inference_started": False,
     }
     write_json(dataset_root / "reports" / "assets_prepare.json", report)
     state = load_json(dataset_root / "dataset_state.json", {}) or {}

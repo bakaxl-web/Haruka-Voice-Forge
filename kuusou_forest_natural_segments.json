@@ -1,0 +1,106 @@
+[
+  {
+    "name": "opening_phrase_01",
+    "start": 0.33,
+    "end": 10.05,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  },
+  {
+    "name": "opening_phrase_02",
+    "start": 11.59,
+    "end": 21.45,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  },
+  {
+    "name": "opening_phrase_03",
+    "start": 22.94,
+    "end": 32.59,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  },
+  {
+    "name": "first_build_01",
+    "start": 34.19,
+    "end": 55.16,
+    "index_rate": 0.52,
+    "rms_mix_rate": 0.27,
+    "protect": 0.36
+  },
+  {
+    "name": "first_build_02",
+    "start": 56.17,
+    "end": 67.26,
+    "index_rate": 0.52,
+    "rms_mix_rate": 0.27,
+    "protect": 0.36
+  },
+  {
+    "name": "first_release_01",
+    "start": 68.30,
+    "end": 92.32,
+    "index_rate": 0.55,
+    "rms_mix_rate": 0.29,
+    "protect": 0.38
+  },
+  {
+    "name": "first_release_02",
+    "start": 92.69,
+    "end": 101.65,
+    "index_rate": 0.55,
+    "rms_mix_rate": 0.29,
+    "protect": 0.38
+  },
+  {
+    "name": "second_verse_01",
+    "start": 103.22,
+    "end": 124.35,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  },
+  {
+    "name": "second_verse_02",
+    "start": 125.56,
+    "end": 136.23,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  },
+  {
+    "name": "second_release",
+    "start": 137.42,
+    "end": 161.27,
+    "index_rate": 0.55,
+    "rms_mix_rate": 0.29,
+    "protect": 0.38
+  },
+  {
+    "name": "third_release",
+    "start": 182.54,
+    "end": 230.79,
+    "index_rate": 0.52,
+    "rms_mix_rate": 0.27,
+    "protect": 0.36
+  },
+  {
+    "name": "peak_phrase",
+    "start": 234.05,
+    "end": 242.77,
+    "index_rate": 0.55,
+    "rms_mix_rate": 0.29,
+    "protect": 0.38
+  },
+  {
+    "name": "outro_phrase",
+    "start": 251.61,
+    "end": 261.53,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  }
+]

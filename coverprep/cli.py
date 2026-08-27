@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .adapters import doctor_report
 from .dataset_audit import audit_dataset_candidates, generate_dataset_review_queue
-from .dataset_finalize import finalize_dataset, independent_qa
+from .dataset_finalize import finalize_dataset, finalize_expanded_dataset, independent_qa
 from .dataset_repair import batch_repair_dataset, verify_batch_repair
 from .note_mapping import auto_map_run
 from .pipeline import run_pipeline
@@ -22,6 +22,7 @@ from .training_dataset import (
     generate_dataset_g2p_candidates,
     generate_dataset_gap_repair_candidates,
     generate_dataset_note_candidates,
+    initialize_expanded_dataset,
     initialize_dataset,
     prepare_song_assets,
     repair_score_dataset,
@@ -91,6 +92,14 @@ def build_parser() -> argparse.ArgumentParser:
     dataset_init.add_argument("--model-profile", type=Path, default=COVER_PREP_ROOT / "profiles" / "haruka_local_ja_common_v1.yaml")
     dataset_init.add_argument("--language-profile", type=Path, default=COVER_PREP_ROOT / "profiles" / "languages" / "ja_common.yaml")
     dataset_init.add_argument("--tool-config", type=Path, default=COVER_PREP_ROOT / "config" / "tools.local.yaml")
+    dataset_expand = dataset_sub.add_parser("expand-init", help="从封存 v13 初始化补充歌曲工作区")
+    dataset_expand.add_argument("--base-dataset", required=True)
+    dataset_expand.add_argument("--dataset", required=True)
+    dataset_expand.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
+    dataset_expand.add_argument("--reviewed-manifest", type=Path, required=True)
+    dataset_expand.add_argument("--source-registry", type=Path, action="append", required=True)
+    dataset_expand.add_argument("--song-id", action="append", dest="song_ids", help="只登记指定歌曲，可重复指定")
+    dataset_expand.add_argument("--ffmpeg-path", type=Path)
     dataset_prepare = dataset_sub.add_parser("prepare", help="派生 v4 WAV 并冻结 GAME 自动 MIDI")
     dataset_prepare.add_argument("--dataset", required=True)
     dataset_prepare.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
@@ -100,6 +109,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path(r"D:\语音模型\Haruka-SVS-Pilot\expansion_v1\game_batch_v1\auto_scores_game1_20260822"),
     )
     dataset_prepare.add_argument("--song-id", action="append", dest="song_ids", help="只准备指定歌曲，可重复指定")
+    dataset_prepare.add_argument("--extract-game", action="store_true", help="缺少 MIDI 时调用官方 GAME extract")
+    dataset_prepare.add_argument("--game-model", type=Path, help="GAME extract 使用的模型文件")
+    dataset_prepare.add_argument("--game-python", type=Path, help="GAME 使用的 Python 解释器")
+    dataset_prepare.add_argument("--game-tool-root", type=Path, help="GAME 工具根目录，包含 infer.py")
+    dataset_prepare.add_argument("--game-language", default="ja")
+    dataset_prepare.add_argument("--game-num-workers", type=int, default=0)
     dataset_lyrics = dataset_sub.add_parser("lyrics", help="检查本地歌词 TSV 和读音输入")
     dataset_lyrics.add_argument("--dataset", required=True)
     dataset_lyrics.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
@@ -188,6 +203,15 @@ def build_parser() -> argparse.ArgumentParser:
     dataset_finalize.add_argument("--dry-run", action="store_true")
     dataset_finalize.add_argument("--resume", action="store_true")
     dataset_finalize.add_argument("--max-prune-ratio", type=float, default=0.05)
+    dataset_expanded_finalize = dataset_sub.add_parser("finalize-expanded", help="合并 v13 封存基线和补充歌曲并打包")
+    dataset_expanded_finalize.add_argument("--source-dataset", required=True)
+    dataset_expanded_finalize.add_argument("--base-dataset", required=True)
+    dataset_expanded_finalize.add_argument("--target-dataset", required=True)
+    dataset_expanded_finalize.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
+    dataset_expanded_finalize.add_argument("--through", choices=("freeze", "segment", "align", "pitch", "build", "qa", "package"), default="package")
+    dataset_expanded_finalize.add_argument("--active-split", choices=("development", "final"), default="development")
+    dataset_expanded_finalize.add_argument("--dry-run", action="store_true")
+    dataset_expanded_finalize.add_argument("--resume", action="store_true")
     dataset_independent = dataset_sub.add_parser("independent-qa", help="从磁盘重新读取 v11 并执行独立只读校验")
     dataset_independent.add_argument("--dataset", required=True)
     dataset_independent.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
@@ -226,8 +250,33 @@ def main(argv: list[str] | None = None) -> int:
                     f"song-011 segments={report['song011_segments']}"
                 )
                 return 0
+            if args.dataset_command == "expand-init":
+                report = initialize_expanded_dataset(
+                    args.root / args.base_dataset,
+                    args.root / args.dataset,
+                    args.source_registry,
+                    args.reviewed_manifest,
+                    song_ids=args.song_ids,
+                    ffmpeg_path=args.ffmpeg_path,
+                )
+                print(
+                    f"v14 扩展工作区：{report['status']}；"
+                    f"歌曲数={len(report['selected_song_ids'])}；"
+                    f"模板已生成"
+                )
+                return 0
             if args.dataset_command == "prepare":
-                report = prepare_song_assets(args.root / args.dataset, args.game_root, song_ids=args.song_ids)
+                report = prepare_song_assets(
+                    args.root / args.dataset,
+                    args.game_root,
+                    song_ids=args.song_ids,
+                    extract_game=args.extract_game,
+                    game_model=args.game_model,
+                    game_python=args.game_python,
+                    game_tool_root=args.game_tool_root,
+                    game_language=args.game_language,
+                    game_num_workers=args.game_num_workers,
+                )
                 print(f"训练集资产准备：{report['status']}；歌曲数={len(report['songs'])}；问题数={len(report['issues'])}")
                 return 0 if report["status"] == "ASSETS_PREPARED" else 1
             if args.dataset_command == "lyrics":
@@ -346,6 +395,25 @@ def main(argv: list[str] | None = None) -> int:
                     f"裁剪={budget.get('total_pruned_duration_sec', 0.0):.6f}s/"
                     f"{budget.get('max_prune_duration_sec', 0.0):.6f}s"
                 )
+                if report.get("package"):
+                    print(f"本地训练包：{report['package'].get('archive', '')}")
+                return 0 if report["status"] in {"DRY_RUN", "STAGE_COMPLETE", "LOCAL_PACKAGE_READY"} else 1
+            if args.dataset_command == "finalize-expanded":
+                report = finalize_expanded_dataset(
+                    args.root / args.source_dataset,
+                    args.root / args.base_dataset,
+                    args.root / args.target_dataset,
+                    through=args.through,
+                    active_split=args.active_split,
+                    dry_run=args.dry_run,
+                    resume=args.resume,
+                )
+                print(
+                    f"扩展训练集收尾：{report['status']}；阶段={args.through}；"
+                    f"阻塞项={len(report.get('blockers', [])) + len(report.get('segment_issues', []))}"
+                )
+                if report.get("status") == "BLOCKED":
+                    print(f"收尾报告：{args.root / args.source_dataset / 'reports' / 'finalize_expanded.json'}")
                 if report.get("package"):
                     print(f"本地训练包：{report['package'].get('archive', '')}")
                 return 0 if report["status"] in {"DRY_RUN", "STAGE_COMPLETE", "LOCAL_PACKAGE_READY"} else 1

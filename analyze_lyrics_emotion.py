@@ -36,8 +36,34 @@ _SRT_TIME = re.compile(
     r"(?P<end>\d{1,2}:\d{2}:\d{2}[,.]\d{3})"
 )
 
-# 默认回退不猜测具体歌曲歌词，只使用通用标点信号；它不是模型推理。
-_SEMANTIC_HINTS: list[tuple[str, dict[str, float], str]] = []
+# 外部模型不可用时的透明回退规则。它不是模型推理，输出会在报告中明确标记。
+# 这些提示只影响可审计的弱先验，不改变目标仓库的通用分段默认值。
+_SEMANTIC_HINTS: list[tuple[str, dict[str, float], str]] = [
+    (r"いつもの|特等席|秘密の花園|笑いあ|笑い合|笑顔|お弁当|集まる|一緒|抱きしめ", {
+        "joy": 0.24,
+        "trust": 0.20,
+    }, "shared_place_or_smile"),
+    (r"これから|今から|待ってて|また", {
+        "anticipation": 0.30,
+        "joy": 0.08,
+    }, "forward_motion"),
+    (r"大人になって|酸いも甘い|見えた時|夢", {
+        "anticipation": 0.18,
+        "sadness": 0.16,
+    }, "future_reflection"),
+    (r"遠い|絶対ない|不安|バラバラ|かな|なのかな|涙|汚い", {
+        "sadness": 0.28,
+        "fear": 0.18,
+    }, "uncertainty_or_loss"),
+    (r"喧嘩|バカ", {
+        "sadness": 0.16,
+        "anger": 0.08,
+    }, "conflict_or_self_reproach"),
+    (r"禁制|秘密", {
+        "surprise": 0.08,
+        "trust": 0.08,
+    }, "private_space"),
+]
 
 
 def parse_srt_timestamp(value: str) -> float:
@@ -103,7 +129,7 @@ def _proxy_scores(text: str) -> tuple[dict[str, float], list[str]]:
         matched.append("exclamation")
         scores["joy"] += 0.08
         scores["surprise"] += 0.05
-    if "？" in text or "?" in text:
+    if "？" in text or "?" in text or "かな" in text or "なのかな" in text:
         matched.append("question")
         scores["fear"] += 0.08
         scores["sadness"] += 0.08

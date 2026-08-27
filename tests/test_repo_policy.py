@@ -59,6 +59,13 @@ class RepositoryPolicyTests(unittest.TestCase):
 
         self.assertEqual(violations, [{"path": "outputs/job/.env", "reason": "secret-file"}])
 
+    def test_allows_full_conversation_archives_over_source_file_limit(self):
+        archive = self.root / "conversations" / "archive" / "thread.md"
+        archive.parent.mkdir(parents=True)
+        archive.write_text("conversation\n" * 32, encoding="utf-8")
+
+        self.assertEqual(scan_paths(self.root, max_bytes=1), [])
+
 
 if __name__ == "__main__":
     unittest.main()

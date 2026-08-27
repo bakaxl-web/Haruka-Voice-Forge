@@ -23,6 +23,7 @@ from .note_mapping import build_ds_skeleton
 from .profile import allowed_phones, dictionary_path, language_profile, load_job_profile, load_language_profile, load_tool_config, variance_capabilities
 from .review import apply_review, prepare_issues, read_review_queue, restore_auto_locked_reviews, write_review_queue
 from .schema import derive_note_slur, item_duration, normalize_ds_item, parse_numbers, parse_sequence, validate_ds_item
+from .vocal2midi import Vocal2MidiIntegrationError, merge_vocal2midi_config, run_vocal2midi, should_run_vocal2midi
 from .workspace import JobRun
 
 
@@ -68,6 +69,16 @@ def _clear_generated_issues(
     ]
     if len(kept) != len(old):
         write_json(run.run_dir / "review" / "issues.json", kept)
+
+
+def _add_issue_once(run: JobRun, issue: dict[str, Any]) -> None:
+    """按稳定字段去重阶段诊断，避免重跑自动前端堆积相同审核项。"""
+    key = tuple(str(issue.get(field, "")) for field in ("type", "segment_id", "start_sec", "end_sec", "message"))
+    for existing in run.issue_list():
+        existing_key = tuple(str(existing.get(field, "")) for field in ("type", "segment_id", "start_sec", "end_sec", "message"))
+        if existing_key == key:
+            return
+    run.add_issue(issue)
 
 
 def _clip_exclusions_to_training(
@@ -212,6 +223,59 @@ def stage_separate(run: JobRun) -> bool:
 
 def stage_score(run: JobRun) -> bool:
     job = run.load_job()
+    v2m_config = merge_vocal2midi_config(load_tool_config(job), job)
+    if should_run_vocal2midi(job, v2m_config):
+        guide_path = run.run_dir / "audio" / "guide.wav"
+        if not guide_path.is_file():
+            _add_issue_once(
+                run,
+                {
+                    "type": "VOCAL2MIDI_FAILED",
+                    "segment_id": "vocal2midi",
+                    "message": "Vocal2Midi 需要先由 separate 阶段生成有效的 audio/guide.wav",
+                },
+            )
+            return True
+        try:
+            manifest = run_vocal2midi(run.run_dir, guide_path, v2m_config)
+            source = Path(str(manifest["midi"]["path"]))
+            result = parse_midi(source)
+            copy_file(source, run.run_dir / "score" / "auto.mid")
+            write_json(run.run_dir / "score" / "auto_notes.json", result.notes)
+            write_json(run.run_dir / "score" / "tempo_map.json", result.tempo_events)
+            for issue in result.issues:
+                _add_issue_once(run, issue)
+            _add_issue_once(
+                run,
+                {
+                    "type": "VOCAL2MIDI_AUTO_LYRICS_REVIEW_REQUIRED",
+                    "segment_id": "vocal2midi",
+                    "message": "Vocal2Midi 自动歌词只作为候选，需人工逐音符/歌词复核后才能进入最终包",
+                    "proposed_value": manifest["generated_lyrics_tsv"],
+                    "evidence": f"notes={manifest.get('note_count', 0)}; missing={manifest.get('missing_lyric_count', 0)}",
+                },
+            )
+            if manifest.get("missing_lyric_count"):
+                _add_issue_once(
+                    run,
+                    {
+                        "type": "VOCAL2MIDI_EMPTY_LYRIC_REVIEW_REQUIRED",
+                        "segment_id": "vocal2midi",
+                        "message": "Vocal2Midi 存在空歌词或缺失标记，必须人工补齐后才能进入最终包",
+                        "proposed_value": ", ".join(manifest.get("missing_lyric_markers", [])),
+                        "evidence": f"missing={manifest.get('missing_lyric_count', 0)}",
+                    },
+                )
+        except (Vocal2MidiIntegrationError, RuntimeError, OSError, ValueError) as exc:
+            _add_issue_once(
+                run,
+                {
+                    "type": "VOCAL2MIDI_FAILED",
+                    "segment_id": "vocal2midi",
+                    "message": str(exc),
+                },
+            )
+        return True
     raw = str(job.get("score", ""))
     if not raw:
         game = job.get("game", {}) or {}
@@ -257,10 +321,34 @@ def stage_score(run: JobRun) -> bool:
 def stage_lyrics(run: JobRun) -> bool:
     job = run.load_job()
     raw = str(job.get("lyrics", ""))
-    if not raw or not Path(raw).is_file():
-        run.add_issue({"type": "LYRICS_MISSING", "message": "没有歌词 TSV 输入"})
-        return True
-    source = Path(raw)
+    if raw:
+        source = Path(raw)
+        if not source.is_file():
+            run.add_issue({"type": "LYRICS_MISSING", "message": "歌词 TSV 输入不存在"})
+            return True
+    else:
+        manifest = load_json(run.run_dir / "integrations" / "vocal2midi" / "manifest.json", {}) or {}
+        generated = Path(str(manifest.get("generated_lyrics_tsv", "")))
+        if manifest.get("status") == "READY" and generated.is_file():
+            source = generated
+        else:
+            run.add_issue({"type": "LYRICS_MISSING", "message": "没有歌词 TSV 输入"})
+            return True
+    generated_v2m = not raw and manifest.get("status") == "READY" and source.resolve() == Path(str(manifest.get("generated_lyrics_tsv", ""))).resolve()
+    if generated_v2m:
+        _clear_generated_issues(
+            run,
+            types=(
+                "DICTIONARY_MISSING",
+                "G2P_FAILED",
+                "G2P_CANDIDATE_REVIEW_REQUIRED",
+                "G2P_UNKNOWN_PHONEME",
+                "PRONUNCIATION_CANDIDATE_REVIEW_REQUIRED",
+                "PRONUNCIATION_UNLOCKED",
+                "UNKNOWN_DICTIONARY_ENTRY",
+                "UNKNOWN_PHONEME",
+            ),
+        )
     g2p = job.get("g2p", {}) or {}
     g2p_command = str(g2p.get("command", "")) if isinstance(g2p, dict) else ""
     g2p_source = source
@@ -340,12 +428,150 @@ def stage_lyrics(run: JobRun) -> bool:
         language,
         dictionary_layers=dictionary_layers,
     )
-    shutil.copy2(source, run.run_dir / "lyrics" / source.name)
+    destination = run.run_dir / "lyrics" / source.name
+    if source.resolve() != destination.resolve():
+        shutil.copy2(source, destination)
     write_json(run.run_dir / "lyrics" / "occurrences.json", result.occurrences)
     write_json(run.run_dir / "lyrics" / "pronunciation_locks.json", [item.get("pronunciation_lock", {}) for item in result.occurrences])
     write_json(run.run_dir / "lyrics" / "lyrics_rows.json", result.rows)
     run.add_issues(result.issues)
+    if generated_v2m:
+        _write_vocal2midi_note_mapping(run, result.occurrences, manifest)
     return True
+
+
+def _write_vocal2midi_note_mapping(
+    run: JobRun,
+    occurrences: list[dict[str, Any]],
+    manifest: dict[str, Any],
+) -> None:
+    """按 Vocal2Midi CSV 顺序生成精确映射草稿，并为 MFA 合并连续演唱片段。"""
+    notes = load_json(run.run_dir / "score" / "auto_notes.json", []) or []
+    mapping: list[dict[str, Any]] = []
+    assignments: list[dict[str, Any]] = []
+    note_rows: list[dict[str, Any]] = []
+    used_indices: set[int] = set()
+    invalid_occurrences: list[str] = []
+    for occurrence in occurrences:
+        phrase_id = str(occurrence.get("phrase_id", ""))
+        if not phrase_id.startswith("v2m-"):
+            continue
+        try:
+            note_index = int(phrase_id.removeprefix("v2m-")) - 1
+        except ValueError:
+            invalid_occurrences.append(phrase_id)
+            continue
+        if note_index < 0 or note_index >= len(notes) or note_index in used_indices:
+            invalid_occurrences.append(phrase_id)
+            continue
+        phones = [str(phone) for phone in occurrence.get("phone_seq", [])]
+        if not phones:
+            continue
+        note = notes[note_index]
+        note_rows.append({"occurrence": occurrence, "note_index": note_index, "note": note, "phones": phones})
+        used_indices.add(note_index)
+
+    # TSV 仍然保持逐音符，便于人工逐行修订；MFA/DS 则按连续演唱片段合并，
+    # 避免把一个长音的剩余时长误判为空白并丢掉。每个合并项仍保留原始音符索引。
+    groups: list[list[dict[str, Any]]] = []
+    current: list[dict[str, Any]] = []
+    for row in note_rows:
+        if not current:
+            current = [row]
+            continue
+        previous_note = current[-1]["note"]
+        current_start = float(current[0]["note"].get("start", 0.0))
+        proposed_end = float(row["note"].get("end", 0.0))
+        gap = float(row["note"].get("start", 0.0)) - float(previous_note.get("end", 0.0))
+        if gap >= 0.25 or proposed_end - current_start > 8.0:
+            groups.append(current)
+            current = [row]
+        else:
+            current.append(row)
+    if current:
+        groups.append(current)
+
+    for group_index, group in enumerate(groups, 1):
+        first_occurrence = group[0]["occurrence"]
+        phones = [phone for row in group for phone in row["phones"]]
+        note_indices = [int(row["note_index"]) for row in group]
+        note_seq = [str(row["note"].get("note", "")) for row in group]
+        note_dur = [float(row["note"].get("duration", 0.0)) for row in group]
+        source_phrase_ids = [str(row["occurrence"].get("phrase_id", "")) for row in group]
+        mapping.append(
+            {
+                "phrase_id": f"v2m-group-{group_index:03d}",
+                "source_phrase_ids": source_phrase_ids,
+                "surface": " ".join(str(row["occurrence"].get("surface", "")) for row in group),
+                "reading": " ".join(str(row["occurrence"].get("reading", "")) for row in group),
+                "lang": str(first_occurrence.get("lang", run.load_job().get("language", "ja"))),
+                "phones": phones,
+                "ph_seq": phones,
+                "ph_num": [len(phones)],
+                "note_indices": note_indices,
+                "note_seq": note_seq,
+                "note_dur": note_dur,
+                "note_slur": [0] + [1] * (len(note_seq) - 1),
+                "dictionary_variant": "+".join(str(row["occurrence"].get("dictionary_variant", "")) for row in group),
+                "dictionary_source": "+".join(dict.fromkeys(str(row["occurrence"].get("dictionary_source", "")) for row in group if row["occurrence"].get("dictionary_source"))),
+                "pronunciation_locks": [row["occurrence"].get("pronunciation_lock", {}) for row in group],
+                "mapping_status": "auto_draft",
+                "mapping_flags": ["VOCAL2MIDI_EXACT_NOTE_ASSOCIATION", "VOCAL2MIDI_PHRASE_GROUPED_FOR_MFA"],
+            }
+        )
+    for row in note_rows:
+        occurrence = row["occurrence"]
+        assignments.append(
+            {
+                **row["note"],
+                "phrase_id": str(occurrence.get("phrase_id", "")),
+                "phrase_index": 0,
+                "phone_group": row["phones"],
+                "phone_count": len(row["phones"]),
+                "note_slur": 0,
+            }
+        )
+
+    mapping_path = run.run_dir / "lyrics" / "note_mapping_draft.json"
+    assignment_path = run.run_dir / "score" / "note_assignment_draft.json"
+    write_json(mapping_path, mapping)
+    write_json(assignment_path, assignments)
+    expected_count = int(manifest.get("note_count", len(notes)) or len(notes))
+    missing_indices = [index for index in range(min(expected_count, len(notes))) if index not in used_indices]
+    if expected_count != len(notes) or invalid_occurrences or missing_indices:
+        _add_issue_once(
+            run,
+            {
+                "type": "VOCAL2MIDI_NOTE_MAPPING_INCOMPLETE",
+                "segment_id": "vocal2midi",
+                "message": "Vocal2Midi 自动歌词与 MIDI 音符没有形成完整的一对一候选映射",
+                "proposed_value": f"mapped={len(note_rows)}/{expected_count}; groups={len(mapping)}; missing={missing_indices}; invalid={invalid_occurrences}",
+            },
+        )
+    if mapping:
+        _add_issue_once(
+            run,
+            {
+                "type": "VOCAL2MIDI_AUTO_NOTE_MAPPING_REVIEW_REQUIRED",
+                "segment_id": "vocal2midi",
+                "message": "Vocal2Midi 音符—歌词绑定是自动草稿，需人工检查音符切分、休止和歌词归属",
+                "proposed_value": str(mapping_path),
+                "evidence": f"mapped={len(note_rows)}; groups={len(mapping)}; notes={len(notes)}",
+            },
+        )
+    manifest = dict(manifest)
+    manifest.update(
+        {
+            "note_mapping_draft": str(mapping_path),
+            "note_assignment_draft": str(assignment_path),
+            "mapped_note_count": len(note_rows),
+            "mapping_group_count": len(mapping),
+            "note_mapping_status": "READY_FOR_REVIEW" if mapping else "BLOCKED",
+        }
+    )
+    write_json(run.run_dir / "integrations" / "vocal2midi" / "manifest.json", manifest)
+    # 立即物化新的映射，避免 stage_align 误复用上一轮的 input.ds。
+    _build_ds_from_midi(run)
 
 
 def _apply_lab_durations(item: dict[str, Any], lab_path: Path) -> bool:
@@ -457,6 +683,7 @@ def _build_ds_from_midi(run: JobRun) -> list[dict[str, Any]]:
         )
     if cursor < len(notes):
         run.add_issue({"type": "UNASSIGNED_MIDI_NOTES", "message": "仍有 MIDI 音符没有歌词分配"})
+    write_json(run.run_dir / "alignment" / "input.ds", result)
     return result
 
 
