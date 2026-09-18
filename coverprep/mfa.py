@@ -7,9 +7,12 @@
 
 from __future__ import annotations
 
+import array
 import os
 import re
 import subprocess
+import sys
+import wave
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -202,6 +205,7 @@ def build_mfa_command(
     *,
     python_executable: Path | None = None,
     script: Path | None = None,
+    temporary_directory: Path | None = None,
 ) -> list[str]:
     """构造 MFA 参数数组；调用方必须以 shell=False 执行。
 
@@ -213,7 +217,7 @@ def build_mfa_command(
     if python_executable is None and executable is None:
         raise ValueError("未配置 MFA 启动器")
     launcher = [str(executable)] if python_executable is None else [str(python_executable), str(script)]
-    return launcher + [
+    command = launcher + [
         "align",
         str(corpus_dir),
         str(dictionary),
@@ -224,6 +228,11 @@ def build_mfa_command(
         "--clean",
         "--overwrite",
     ]
+    if temporary_directory is not None:
+        # 显式指定临时数据库目录，避免 MFA 读取中文路径配置后让 OpenFST
+        # 无法创建 phones.txt；调用方仍可通过环境变量传递其他运行时设置。
+        command.extend(["--temporary_directory", str(temporary_directory)])
+    return command
 
 
 def run_mfa(
@@ -284,6 +293,7 @@ def run_mfa(
         beam,
         python_executable=python_executable,
         script=script,
+        temporary_directory=temp_dir,
     )
     result = subprocess.run(
         command,
@@ -303,6 +313,54 @@ def run_mfa(
     return result
 
 
+def _write_pcm16_mono_window(
+    source_path: Path,
+    target_path: Path,
+    start: int,
+    end: int,
+    sample_rate: int,
+) -> tuple[int, int, float]:
+    """用标准库从 PCM16 WAV 写出单声道窗口，供 MFA 环境缺 soundfile 时使用。"""
+    with wave.open(str(source_path), "rb") as source:
+        actual_rate = source.getframerate()
+        channels = source.getnchannels()
+        width = source.getsampwidth()
+        if actual_rate != sample_rate:
+            raise MFAError(f"引导人声采样率不是 {sample_rate}: {actual_rate}")
+        if width != 2 or source.getcomptype() != "NONE" or channels < 1:
+            raise MFAError("soundfile 不可用时仅支持未压缩 PCM16 WAV")
+        start = max(0, int(start))
+        end = min(source.getnframes(), int(end))
+        if end <= start:
+            raise MFAError("MFA 窗口量化后没有音频帧")
+        source.setpos(start)
+        raw = source.readframes(end - start)
+
+    samples = array.array("h")
+    samples.frombytes(raw)
+    if sys.byteorder != "little":
+        samples.byteswap()
+    if channels == 1:
+        mono = samples
+    else:
+        mono = array.array(
+            "h",
+            (
+                max(-32768, min(32767, round(sum(samples[index + offset] for offset in range(channels)) / channels)))
+                for index in range(0, len(samples), channels)
+            ),
+        )
+
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(target_path), "wb") as target:
+        target.setnchannels(1)
+        target.setsampwidth(2)
+        target.setframerate(actual_rate)
+        target.setcomptype("NONE", "not compressed")
+        target.writeframes(mono.tobytes())
+    return start, end, (end - start) / sample_rate
+
+
 def write_anonymous_corpus(
     guide_path: Path,
     corpus_dir: Path,
@@ -314,19 +372,29 @@ def write_anonymous_corpus(
     sample_rate: int = 44100,
 ) -> dict[str, Any]:
     """切出一个精确窗口，并写入匿名 token、transcript 和临时词典。"""
+    start, end, duration = quantize_window(start_sec, end_sec, sample_rate)
     try:
         import soundfile as sf
-    except ImportError as exc:  # pragma: no cover - doctor 负责依赖检查
-        raise MFAError("缺少 soundfile，无法创建 MFA 窗口") from exc
-    audio, actual_rate = sf.read(str(guide_path), always_2d=True, dtype="float32")
-    if int(actual_rate) != sample_rate:
-        raise MFAError(f"引导人声采样率不是 {sample_rate}: {actual_rate}")
-    start, end, duration = quantize_window(start_sec, end_sec, sample_rate)
-    mono, _ = select_mono_channel(audio)
-    window = mono[start:end]
-    corpus_dir.mkdir(parents=True, exist_ok=True)
+    except ImportError:
+        wav_path = corpus_dir / f"{token}.wav"
+        start, end, duration = _write_pcm16_mono_window(
+            guide_path,
+            wav_path,
+            start,
+            end,
+            sample_rate,
+        )
+    else:
+        audio, actual_rate = sf.read(str(guide_path), always_2d=True, dtype="float32")
+        if int(actual_rate) != sample_rate:
+            raise MFAError(f"引导人声采样率不是 {sample_rate}: {actual_rate}")
+        mono, _ = select_mono_channel(audio)
+        window = mono[start:end]
+        wav_path = corpus_dir / f"{token}.wav"
+        corpus_dir.mkdir(parents=True, exist_ok=True)
+        sf.write(str(wav_path), window, sample_rate, subtype="PCM_16")
     wav_path = corpus_dir / f"{token}.wav"
-    sf.write(str(wav_path), window, sample_rate, subtype="PCM_16")
+    corpus_dir.mkdir(parents=True, exist_ok=True)
     phone_text = " ".join(str(phone) for phone in phones)
     (corpus_dir / f"{token}.txt").write_text(token + "\n", encoding="utf-8")
     (corpus_dir / f"{token}.dict").write_text(f"{token}\t{phone_text}\n", encoding="utf-8")

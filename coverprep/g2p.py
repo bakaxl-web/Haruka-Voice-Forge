@@ -39,6 +39,10 @@ def _next_token(tokens: list[str], index: int) -> str:
 
 def _map_token(token: str, next_token: str, allowed: set[str], flags: list[str]) -> str | None:
     # Open JTalk 的复辅音标签需要先转换成目标模型使用的单音素/连音标签。
+    if not token:
+        # 部分带括号注音或未收录汉字会产生空标记；读音仍由相邻假名提供。
+        _append_flag(flags, "empty_g2p_token")
+        return None
     lyric_punctuation = {
         "「",
         "」",
@@ -55,6 +59,13 @@ def _map_token(token: str, next_token: str, allowed: set[str], flags: list[str])
         "&",
         "'",
         '"',
+        "’",
+        "“",
+        "”",
+        "『",
+        "』",
+        "-",
+        "＋",
     }
     if token.isspace() or token in lyric_punctuation:
         # 标点和装饰字符不属于模型音素；保留审核标记，避免静默改变歌词语义。
@@ -70,11 +81,12 @@ def _map_token(token: str, next_token: str, allowed: set[str], flags: list[str])
         "by": "bʲ",
         "py": "p",
         "gy": "ɡ",
+        "hy": "ç",
         "j": "dʑ",
         "y": "j",
     }
     if token in compound:
-        if token in {"ky", "my", "ny", "ry", "by", "py", "gy"}:
+        if token in {"ky", "my", "ny", "ry", "by", "py", "gy", "hy"}:
             _append_flag(flags, "contextual_palatalization")
         return compound[token]
 
@@ -119,6 +131,11 @@ def _map_token(token: str, next_token: str, allowed: set[str], flags: list[str])
     if token == "U":
         return "ɨ̥" if "ɨ̥" in allowed else "ɨ"
 
+    if token == "v":
+        # 当前 Generic47 没有独立的 v；日语化外来词按现有 MFA 词典的 b 读法
+        # 生成候选，同时保留标记，避免把发音取舍误当成已审核事实。
+        _append_flag(flags, "foreign_consonant")
+        return "b"
     direct = {"g": "ɡ", "r": "ɾ", "w": "w", "f": "ɸ"}
     return direct.get(token, token)
 
@@ -263,8 +280,12 @@ def run_pyopenjtalk_batch(
         environment = dict(os.environ)
         # Windows 非 ASCII 路径和标准输入必须显式使用 UTF-8，否则 Open JTalk 可能收到空字符串。
         environment["PYTHONIOENCODING"] = "utf-8"
-        if open_jtalk_dict is not None:
+        # 词典覆盖只对直接调用 pyopenjtalk 的后端生效；GPT-SoVITS 后端
+        # 有自己的日语前端，继承该变量会让其批量调用在部分环境中卡住。
+        if backend == "pyopenjtalk" and open_jtalk_dict is not None:
             environment["OPEN_JTALK_DICT_DIR"] = str(open_jtalk_dict)
+        elif backend == "gpt_sovits_japanese":
+            environment.pop("OPEN_JTALK_DICT_DIR", None)
         result = subprocess.run(
             [executable, "-c", script],
             cwd=str(cwd) if cwd else None,

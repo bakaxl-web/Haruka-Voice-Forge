@@ -8,6 +8,7 @@ from pathlib import Path
 from .adapters import doctor_report
 from .dataset_audit import audit_dataset_candidates, generate_dataset_review_queue
 from .dataset_finalize import finalize_dataset, finalize_expanded_dataset, independent_qa
+from .alignment_rebuild import apply_review_decisions, run_rebuild_alignment
 from .dataset_repair import batch_repair_dataset, verify_batch_repair
 from .note_mapping import auto_map_run
 from .pipeline import run_pipeline
@@ -35,6 +36,22 @@ COVER_PREP_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATASET_ROOT = Path(r"D:\语音模型\Haruka-SVS-Datasets")
 DEFAULT_V4_ROOT = Path(r"D:\语音模型\Haruka-SVC-Dataset-v4")
 DEFAULT_SONG011_ROOT = Path(r"D:\语音模型\Haruka-SVS-Pilot\song-011")
+
+
+def _parse_song_path_assignments(values: list[str] | None) -> dict[str, Path]:
+    """解析 CLI 的 ``song-id=path`` 参数，避免把机器路径写死进代码。"""
+    result: dict[str, Path] = {}
+    for raw_value in values or []:
+        value = str(raw_value)
+        if "=" not in value:
+            raise ValueError(f"参数必须使用 song-id=path 格式：{value}")
+        song_id, raw_path = value.split("=", 1)
+        song_id = song_id.strip()
+        raw_path = raw_path.strip()
+        if not song_id or not raw_path:
+            raise ValueError(f"参数必须同时包含 song-id 和 path：{value}")
+        result[song_id] = Path(raw_path)
+    return result
 
 
 def _add_common_job_args(parser: argparse.ArgumentParser) -> None:
@@ -213,6 +230,76 @@ def build_parser() -> argparse.ArgumentParser:
     dataset_expanded_finalize.add_argument("--active-split", choices=("development", "final"), default="development")
     dataset_expanded_finalize.add_argument("--dry-run", action="store_true")
     dataset_expanded_finalize.add_argument("--resume", action="store_true")
+    dataset_rebuild = dataset_sub.add_parser("rebuild-alignment", help="独立重建 v13/v14 对齐并隔离训练清单")
+    dataset_rebuild.add_argument("--v13-dataset", type=Path, required=True)
+    dataset_rebuild.add_argument("--v14-dataset", type=Path, required=True)
+    dataset_rebuild.add_argument("--target-dataset", type=Path, required=True)
+    dataset_rebuild.add_argument("--mode", choices=("pilot", "full"), default="pilot")
+    dataset_rebuild.add_argument(
+        "--granularity",
+        choices=("window", "sentence"),
+        default="window",
+        help="候选物理粒度；默认保留旧的整窗口行为，sentence 启用句级重建",
+    )
+    dataset_rebuild.add_argument("--game-profile", choices=("auto", "lead-predict", "all-follow"), default="auto")
+    dataset_rebuild.add_argument(
+        "--model-profile",
+        type=Path,
+        default=COVER_PREP_ROOT / "profiles" / "haruka_local_ja_common_v1.yaml",
+        help="声明 Generic47 允许音素的模型配置",
+    )
+    dataset_rebuild.add_argument(
+        "--through",
+        choices=("freeze", "lyrics", "phones", "mfa", "notes", "segment", "qa", "review", "package"),
+        default="freeze",
+    )
+    dataset_rebuild.add_argument("--game-root", type=Path)
+    dataset_rebuild.add_argument("--game-model", type=Path)
+    dataset_rebuild.add_argument("--game-python", type=Path)
+    dataset_rebuild.add_argument("--mfa-executable", type=Path)
+    dataset_rebuild.add_argument("--mfa-python", type=Path)
+    dataset_rebuild.add_argument("--mfa-script", type=Path)
+    dataset_rebuild.add_argument("--mfa-dictionary", type=Path)
+    dataset_rebuild.add_argument("--mfa-acoustic-model", type=Path)
+    dataset_rebuild.add_argument("--mfa-root-dir", type=Path)
+    dataset_rebuild.add_argument("--mfa-temp-dir", type=Path)
+    dataset_rebuild.add_argument("--mfa-beam", type=int, default=100)
+    dataset_rebuild.add_argument("--authoritative-lyrics", type=Path)
+    dataset_rebuild.add_argument(
+        "--authoritative-lyrics-source",
+        action="append",
+        dest="authoritative_lyrics_sources",
+        metavar="SONG_ID=PATH",
+        help="用户确认的逐歌曲歌词文件，可重复指定；LRC 时间不会成为最终边界",
+    )
+    dataset_rebuild.add_argument(
+        "--timing-reference",
+        action="append",
+        dest="timing_references",
+        metavar="SONG_ID=PATH",
+        help="逐歌曲带时间戳 LRC，仅作为 MFA 搜索提示，可重复指定",
+    )
+    dataset_rebuild.add_argument(
+        "--g2p-backend",
+        choices=("gpt_sovits_japanese", "pyopenjtalk"),
+        help="为缺少显式音素的歌词单元生成待审核 G2P 候选",
+    )
+    dataset_rebuild.add_argument("--g2p-python", type=Path)
+    dataset_rebuild.add_argument("--g2p-cwd", type=Path)
+    dataset_rebuild.add_argument("--open-jtalk-dict", type=Path)
+    dataset_rebuild.add_argument(
+        "--review-decisions",
+        type=Path,
+        help="逐条人工审核决定 JSON；仅配合 --through review 使用",
+    )
+    dataset_rebuild.add_argument("--dry-run", action="store_true")
+    dataset_rebuild.add_argument("--resume", action="store_true")
+    dataset_rebuild.add_argument(
+        "--sample-id",
+        action="append",
+        dest="sample_ids",
+        help="只重跑指定候选样本，可重复指定；用于单样本重对齐/重切",
+    )
     dataset_independent = dataset_sub.add_parser("independent-qa", help="从磁盘重新读取 v11 并执行独立只读校验")
     dataset_independent.add_argument("--dataset", required=True)
     dataset_independent.add_argument("--root", type=Path, default=DEFAULT_DATASET_ROOT)
@@ -422,6 +509,55 @@ def main(argv: list[str] | None = None) -> int:
                 if report.get("package"):
                     print(f"本地训练包：{report['package'].get('archive', '')}")
                 return 0 if report["status"] in {"DRY_RUN", "STAGE_COMPLETE", "LOCAL_PACKAGE_READY"} else 1
+            if args.dataset_command == "rebuild-alignment":
+                if args.through == "review":
+                    if args.review_decisions is None:
+                        raise ValueError("--through review 必须同时提供 --review-decisions")
+                    report = apply_review_decisions(args.target_dataset, args.review_decisions)
+                    print(
+                        f"v15 逐条审核已写回：{report.get('status', 'BLOCKED')}；"
+                        f"应用={report.get('applied_count', 0)}；训练未启动"
+                    )
+                    return 0 if report.get("status") == "REVIEW_APPLIED" else 1
+                report = run_rebuild_alignment(
+                    args.v13_dataset,
+                    args.v14_dataset,
+                    args.target_dataset,
+                    mode=args.mode,
+                    granularity=args.granularity,
+                    sample_ids=args.sample_ids,
+                    game_profile=args.game_profile,
+                    through=args.through,
+                    dry_run=args.dry_run,
+                    resume=args.resume,
+                    game_root=args.game_root,
+                    game_model=args.game_model,
+                    game_python=args.game_python,
+                    mfa_executable=args.mfa_executable,
+                    mfa_python=args.mfa_python,
+                    mfa_script=args.mfa_script,
+                    mfa_dictionary=args.mfa_dictionary,
+                    mfa_acoustic_model=args.mfa_acoustic_model,
+                    mfa_root_dir=args.mfa_root_dir,
+                    mfa_temp_dir=args.mfa_temp_dir,
+                    mfa_beam=args.mfa_beam,
+                    authoritative_lyrics=args.authoritative_lyrics,
+                    authoritative_lyrics_sources=_parse_song_path_assignments(
+                        args.authoritative_lyrics_sources
+                    ),
+                    timing_references=_parse_song_path_assignments(args.timing_references),
+                    model_profile=args.model_profile,
+                    g2p_backend=args.g2p_backend,
+                    g2p_python=args.g2p_python,
+                    g2p_cwd=args.g2p_cwd,
+                    open_jtalk_dict=args.open_jtalk_dict,
+                )
+                print(
+                    f"v15 对齐重建：{report.get('status', 'BLOCKED')}；"
+                    f"歌曲候选={report.get('candidate_count', report.get('v13_rows', 0) + report.get('v14_rows', 0))}；"
+                    f"训练清单不会自动放行"
+                )
+                return 0 if report.get("status") in {"DRY_RUN", "FROZEN", "LYRICS_READY", "QUALITY_PENDING", "READY"} else 1
             if args.dataset_command == "independent-qa":
                 report = independent_qa(args.root / args.dataset)
                 print(f"v11 独立磁盘 QA：{report['status']}；片段数={report.get('item_count', 0)}")

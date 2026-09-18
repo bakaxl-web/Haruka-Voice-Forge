@@ -244,17 +244,57 @@ class UnitContractTests(unittest.TestCase):
         self.assertEqual(result.phones, ["ɕ", "i", "m", "p", "a", "i", "ʔ", "c", "ɨː"])
         self.assertIn("sokuon", result.review_flags)
 
+    def test_foreign_v_maps_to_generic47_b_with_review_flag(self):
+        from coverprep.g2p import map_openjtalk_tokens
+
+        result = map_openjtalk_tokens(["e", "v", "e"], {"e", "b"})
+
+        self.assertEqual(result.phones, ["e", "b", "e"])
+        self.assertFalse(result.unknown)
+        self.assertIn("foreign_consonant", result.review_flags)
+
     def test_lyric_punctuation_is_not_emitted_as_unknown_phoneme(self):
         from coverprep.g2p import map_openjtalk_tokens
 
         result = map_openjtalk_tokens(
-            ["k", "i", "　", "「", "」", "（", "）", "…", "♪", "☆", "―", "＆", "．", "'"],
+            [
+                "k",
+                "i",
+                "　",
+                "「",
+                "」",
+                "『",
+                "』",
+                "（",
+                "）",
+                "…",
+                "♪",
+                "☆",
+                "―",
+                "＆",
+                "．",
+                "'",
+                "’",
+                "“",
+                "”",
+                "-",
+                "＋",
+                "",
+            ],
             {"c", "i"},
         )
 
         self.assertEqual(result.phones, ["c", "i"])
         self.assertFalse(result.unknown)
         self.assertIn("punctuation", result.review_flags)
+
+    def test_hy_compound_maps_to_generic47_palatal_h(self):
+        from coverprep.g2p import map_openjtalk_tokens
+
+        result = map_openjtalk_tokens(["hy", "a"], {"ç", "a"})
+
+        self.assertEqual(result.phones, ["ç", "a"])
+        self.assertFalse(result.unknown)
 
     def test_unmarked_adjacent_vowels_are_not_silently_merged(self):
         from coverprep.g2p import map_openjtalk_tokens
@@ -354,6 +394,32 @@ class UnitContractTests(unittest.TestCase):
             "D:/Haruka-SVS-Tools/open_jtalk_dict",
         )
 
+    def test_gpt_sovits_batch_does_not_receive_open_jtalk_dictionary_override(self):
+        import json
+        import os
+        from subprocess import CompletedProcess
+        from coverprep.g2p import run_pyopenjtalk_batch
+
+        with patch.dict(os.environ, {"OPEN_JTALK_DICT_DIR": "D:/inherited/wrong-dict"}, clear=True):
+            with patch("coverprep.g2p.subprocess.run") as mocked_run:
+                mocked_run.return_value = CompletedProcess(
+                    args=[],
+                    returncode=0,
+                    stdout=json.dumps([["k", "i"]]),
+                    stderr="",
+                )
+                result = run_pyopenjtalk_batch(
+                    ["きみ"],
+                    Path("D:/python.exe"),
+                    Path("D:/work"),
+                    "gpt_sovits_japanese",
+                    open_jtalk_dict=Path("D:/Haruka-SVS-Tools/open_jtalk_dict"),
+                )
+
+            self.assertEqual(result, [["k", "i"]])
+            environment = mocked_run.call_args.kwargs["env"]
+            self.assertNotIn("OPEN_JTALK_DICT_DIR", environment)
+
     def test_pyopenjtalk_kana_batch_returns_one_reading_per_input(self):
         import json
         from subprocess import CompletedProcess
@@ -413,6 +479,7 @@ class UnitContractTests(unittest.TestCase):
                     stdout="キミ\tc i\nの\tn o\n",
                     stderr="",
                 )
+
                 result = run_mfa_g2p_batch(
                     ["キミ の"],
                     python_executable,
@@ -428,6 +495,28 @@ class UnitContractTests(unittest.TestCase):
         self.assertIn("g2p", call.args[0])
         self.assertIn("--no_use_mp", call.args[0])
         self.assertIn(str(python_executable.parent / "Library" / "bin"), call.kwargs["env"]["PATH"])
+
+    def test_mfa_command_passes_explicit_ascii_temporary_directory(self):
+        from coverprep.mfa import build_mfa_command
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            command = build_mfa_command(
+                None,
+                root / "corpus",
+                root / "dictionary.dict",
+                root / "acoustic.zip",
+                root / "output",
+                python_executable=root / "python.exe",
+                script=root / "mfa-script.py",
+                temporary_directory=Path(r"D:\Haruka-SVS-Tools\mfa_tmp"),
+            )
+
+        self.assertIn("--temporary_directory", command)
+        self.assertEqual(
+            command[command.index("--temporary_directory") + 1],
+            r"D:\Haruka-SVS-Tools\mfa_tmp",
+        )
 
     def test_note_allocator_hits_exact_midi_total(self):
         from coverprep.note_mapping import allocate_note_counts
