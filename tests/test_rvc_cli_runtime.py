@@ -4,8 +4,21 @@ import unittest
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
+from run_rvc_aligned import resolve_rvc_app_root
 
-CLI_PATH = Path(r"D:\语音模型\Haruka-RVC-Pilot\app\infer\cli.py")
+
+def _resolve_cli_path():
+    """外部 RVC CLI 路径：复用生产入口的 env/默认解析，本机未配置时返回 None。
+
+    CI 上没有本机 RVC app，不能硬编码路径；缺失时整组测试跳过（与 Open JTalk 未配置时的处理一致）。
+    """
+    try:
+        return resolve_rvc_app_root() / "infer" / "cli.py"
+    except (FileNotFoundError, OSError):
+        return None
+
+
+CLI_PATH = _resolve_cli_path()
 
 
 def load_cli_module():
@@ -17,6 +30,7 @@ def load_cli_module():
     return module
 
 
+@unittest.skipUnless(CLI_PATH is not None and CLI_PATH.is_file(), f"本机未配置外部 RVC CLI：{CLI_PATH}")
 class RvcCliRuntimeTests(unittest.TestCase):
     def test_configure_runtime_cache_preserves_explicit_numba_cache_dir(self):
         original_cwd = Path.cwd()
