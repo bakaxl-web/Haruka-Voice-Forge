@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "decisions": [
+    {
+      "sample_id": "v15-v14-song-017-0001__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过；第29条的满幅采样点作为独立音频质量问题保留，不改变本次通过判断。",
+      "review_source_sha256": "788654b1c0cc4b2ba573e31a9887c7f3c385f7d1774e0f30b24410f966bb453d"
+    },
+    {
+      "sample_id": "v15-v14-song-018-0001__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过。",
+      "review_source_sha256": "cb12d36c28f03beee12e75a493704b7fb02de7c3cd6e9668ac5706fbf5384a9e"
+    },
+    {
+      "sample_id": "v15-v14-song-019-0008__sentence-group-0001",
+      "choice": "PARTIAL",
+      "comment": "用户确认结尾存在多切；已使用一次重试，按计划不再重试，直接隔离。",
+      "review_source_sha256": "448e292ef756a9dae130346483337813fab9067309b442c8bfe88a2e77df5369"
+    },
+    {
+      "sample_id": "v15-v14-song-019-0011__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过。",
+      "review_source_sha256": "448e292ef756a9dae130346483337813fab9067309b442c8bfe88a2e77df5369"
+    },
+    {
+      "sample_id": "v15-v14-song-021-0002__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过。",
+      "review_source_sha256": "7236805e10328a1a0ca97fcf50262e5e6bbfbfbe1fb47c8e005d6ef2db5f2b32"
+    },
+    {
+      "sample_id": "v15-v14-song-021-0008__sentence-group-0001",
+      "choice": "PARTIAL",
+      "comment": "用户确认开头存在多切；按计划执行一次边界重建。",
+      "retry_start_sec": 86.71199546485262,
+      "retry_boundary_evidence": {
+        "start_sec": 85.56199546485261,
+        "end_sec": 86.71199546485262,
+        "label": "SP",
+        "source": "CURRENT_MFA_CONFIRMED_SP"
+      },
+      "review_source_sha256": "7236805e10328a1a0ca97fcf50262e5e6bbfbfbe1fb47c8e005d6ef2db5f2b32"
+    },
+    {
+      "sample_id": "v15-v14-song-021-0003__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过。",
+      "review_source_sha256": "7236805e10328a1a0ca97fcf50262e5e6bbfbfbe1fb47c8e005d6ef2db5f2b32"
+    },
+    {
+      "sample_id": "v15-v14-song-021-0004__sentence-group-0001",
+      "choice": "PARTIAL",
+      "comment": "用户确认最后一句不完整；按计划执行一次边界重建。",
+      "retry_end_sec": 71.79299319727892,
+      "retry_boundary_evidence": {
+        "start_sec": 69.14299319727891,
+        "end_sec": 71.79299319727892,
+        "label": "SP",
+        "source": "ADJACENT_MFA_CONFIRMED_SP"
+      },
+      "review_source_sha256": "7236805e10328a1a0ca97fcf50262e5e6bbfbfbe1fb47c8e005d6ef2db5f2b32"
+    },
+    {
+      "sample_id": "v15-v14-song-022-0001__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过。",
+      "review_source_sha256": "ddbcac1986a3d693b9d07fe759cb5371a055f03abe5bf3b04ed3898d17ffcd47"
+    },
+    {
+      "sample_id": "v15-v14-song-022-0003__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过；备注：空白段较长，暂不自动裁剪。",
+      "review_source_sha256": "ddbcac1986a3d693b9d07fe759cb5371a055f03abe5bf3b04ed3898d17ffcd47"
+    },
+    {
+      "sample_id": "v15-v14-song-022-0004__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "用户试听通过；备注：中间空白段较长且结尾多切，暂不自动裁剪。",
+      "review_source_sha256": "ddbcac1986a3d693b9d07fe759cb5371a055f03abe5bf3b04ed3898d17ffcd47"
+    },
+    {
+      "sample_id": "v15-v14-song-022-0006__sentence-group-0001",
+      "choice": "PARTIAL",
+      "comment": "用户确认开头有漏切；按计划执行一次边界重建。",
+      "retry_start_sec": 61.69498866213152,
+      "retry_boundary_evidence": {
+        "start_sec": 61.69498866213152,
+        "end_sec": 62.330997732426304,
+        "label": "SP",
+        "source": "ADJACENT_MFA_CONFIRMED_SP"
+      },
+      "review_source_sha256": "ddbcac1986a3d693b9d07fe759cb5371a055f03abe5bf3b04ed3898d17ffcd47"
+    }
+  ]
+}
