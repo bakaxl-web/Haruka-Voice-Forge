@@ -1,0 +1,46 @@
+{
+  "schema_version": "haruka-model-manifest-v1",
+  "model_version": "model-rvc-singing-v6a-e200-2026.09.19",
+  "run_id": "haruka_singing_v6a_loss_b16_cache_e100_20260919_to_e500_20260919",
+  "model_family": "rvc-singing",
+  "code_commit": "legacy-imported",
+  "dataset_version": "haruka-singing-v6a-loss-b16-cache-20260919",
+  "config_sha256": "legacy-imported",
+  "epoch": 200,
+  "step": 6000,
+  "seed": 20260919,
+  "torch": "2.7.1+cu118",
+  "cuda": "11.8",
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "status": "stable",
+  "inference": {
+    "f0_method": "rmvpe",
+    "pitch": 0,
+    "index_rate": 0.1,
+    "rms_mix_rate": 1.0,
+    "protect": 0.33,
+    "core_seconds": 7.0,
+    "context_seconds": 0.5,
+    "chunk_crossfade_ms": 100.0,
+    "acceptance": "user_confirmed_dry_vocal_and_full_song_listening",
+    "acceptance_evidence": "external-evaluation/local_v6a_e200_yoru_mo_sugara_kimi_omou_fullsong_20260919/cover-report.json"
+  },
+  "files": [
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v6a_loss_b16_cache_e100_20260919_to_e500_20260919_e200_s6000.pth",
+      "release_name": "haruka-rvc-singing-v6a-e200.pth",
+      "source_relpath": "haruka_singing_v6a_loss_b16_cache_e100_20260919_to_e500_20260919_e200_s6000.pth",
+      "bytes": 55284564,
+      "sha256": "a92166723ea2ddbada6ff358f18e2821497c19db828571b6a62039a6d866c9f4"
+    },
+    {
+      "role": "index",
+      "name": "haruka_singing_v6a_loss_added_IVF1345_Flat_nprobe_1_haruka_singing_v6a_loss_v2.index",
+      "release_name": "haruka-rvc-singing-v6a-ivf1345.index",
+      "source_relpath": "haruka_singing_v6a_loss_added_IVF1345_Flat_nprobe_1_haruka_singing_v6a_loss_v2.index",
+      "bytes": 165790379,
+      "sha256": "3ecf036f3ea56837e20020f1f0eefd6aa4fcf8bb8c6cae7acc227fb9509b01b1"
+    }
+  ]
+}

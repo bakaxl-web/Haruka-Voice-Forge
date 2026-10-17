@@ -242,9 +242,9 @@ SP 修复后的 Base 直推 w009 已达到“还行”，尾部收束明显改�
 
 ### 8.4 song011 的处理边界
 
-9 条 `song011__w001`—`w009` 的原始 TextGrid 在当前服务器上缺失，来源 manifest 指向 Windows 本地的 sealed source。没有上游 TextGrid，就无法证明其 phone 边界和 `<EMPTY>` 语义；因此当前 77 条 v4 冻结候选暂不吸收这 9 条。
+9 条 `song011__w001`—`w009` 的 TextGrid 已从 Windows 本地 sealed source 恢复到独立 `nonlossy_v1` 对齐链；它们仍不并入 77 条 v4 冻结训练线。旧 `final_v3` 导出会把 `<EMPTY>` 停顿并入相邻 lexical phone，导致 Base 输入边界错误；`nonlossy_v2_spzero` 在不改原始音频和 TextGrid 的前提下显式保留 `SP`，并将 `SP/AP/rest` 的 F0 置零。
 
-仓库中的 `finalize_song011_svs_v1.py`、`promote_song011_final_v3.py` 等脚本仍有价值，它们代表 song-011 的独立候选最终化/双审链；但它们的 `training_ready` 或“自动主审通过”不能越过继承对话中发现的上游 TextGrid 缺失与版本隔离问题。
+`nonlossy_v2_spzero` 已完成 9/9 词序匹配、分区连续、密度检查和 Generic Base 词典兼容性验证；它的 Base-only 全曲输出可作为当前修复候选，但仍须完成人工试听。仓库中的 `finalize_song011_svs_v1.py`、`promote_song011_final_v3.py` 等脚本仍保留作历史候选最终化/双审链，不得把旧 `final_v3` 输入当作 Generic Base 权重缺陷。
 
 ## 9. 阶段 10—12：推理、试听与发布
 
