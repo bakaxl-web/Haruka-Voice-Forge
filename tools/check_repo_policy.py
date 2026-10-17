@@ -31,6 +31,7 @@ IGNORED_DIRECTORIES = {
     "cache",
     "runs",
     "logs",
+    "output",
     "outputs",
     "artifacts",
     "dataset",
@@ -50,7 +51,9 @@ def scan_paths(root: Path, max_bytes: int = MAX_GIT_FILE_BYTES) -> list[dict[str
         relative = path.relative_to(root)
         if not path.is_file():
             continue
-        ignored_artifact = any(part in IGNORED_DIRECTORIES for part in relative.parts[:-1])
+        # Windows 文件系统不区分大小写，忽略目录比较也必须忽略大小写，否则
+        # TEMP/、OUTPUT/ 这类实际目录会漏检并误报超大文件。
+        ignored_artifact = any(part.lower() in IGNORED_DIRECTORIES for part in relative.parts[:-1])
         relative_name = relative.as_posix()
         # coverprep_env 是本机隔离运行环境；其中的 certifi 公共 CA 包不是项目密钥。
         # 仍对其它被忽略目录保留密钥检查，避免误把真实凭据藏在缓存/运行产物中。

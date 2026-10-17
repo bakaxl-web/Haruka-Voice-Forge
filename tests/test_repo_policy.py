@@ -50,6 +50,14 @@ class RepositoryPolicyTests(unittest.TestCase):
 
         self.assertEqual(scan_paths(self.root), [])
 
+    def test_ignores_generated_directory_names_case_insensitively(self):
+        (self.root / "OUTPUT" / "job").mkdir(parents=True)
+        (self.root / "OUTPUT" / "job" / "audio.wav").write_bytes(b"audio")
+        (self.root / "TEMP" / "ja").mkdir(parents=True)
+        (self.root / "TEMP" / "ja" / "model.pth").write_bytes(b"model")
+
+        self.assertEqual(scan_paths(self.root), [])
+
     def test_reports_secret_inside_ignored_generated_output(self):
         secret = self.root / "outputs" / "job" / ".env"
         secret.parent.mkdir(parents=True)
