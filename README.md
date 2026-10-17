@@ -51,14 +51,7 @@ python -m coverprep --help
 
 `config/coverprep_v3.defaults.json`、Profiles 和模板只保留相对路径或空占位符；实际 MFA、DiffSinger、MSST、GAME、GPT-SoVITS 路径必须在本机任务配置中填写。
 
-Vocal2Midi 接入保持为可选的外部前端。它的源码、模型、缓存和虚拟环境不属于本仓库；`coverprep` 只通过 `shell=False` 调用独立解释器 `D:/Vocal2Midi-Local/.venv/Scripts/python.exe`。复制 `config/tools.local.example.yaml` 为本机配置后，只有在单曲 `job.yaml` 中显式设置 `vocal2midi.enabled: true`，且 `mode: guide` 同时缺少 `score` 与 `lyrics` 时才会运行。目标仓库使用独立的 `coverprep_env`，并在其中安装 `requirements-coverprep.txt`（含 `praat-parselmouth`）；Vocal2Midi 继续使用自己的 `.venv`。
-
-```yaml
-vocal2midi:
-  enabled: true
-```
-
-自动生成的 MIDI、逐音符 CSV、歌词候选、USTX、F0 和进程日志会保存在作业的 `integrations/vocal2midi/` 下；映射、发音、自动歌词和时序问题进入审核队列，人工审核前 QA 保持 `BLOCKED`。
+Vocal2Midi 已停用。历史适配器代码、计划、对话和外部验证产物仅用于追溯；`coverprep`、`doctor`、任务模板和批处理入口不会调用、安装或重新启用它。新的 guide 任务必须显式提供 `score` 和 `lyrics`，否则按缺失输入处理。
 
 批处理入口会优先使用仓库旁的 `coverprep_env`，不存在时回退到当前 Python：
 
@@ -76,6 +69,8 @@ CI 会安装 Python 依赖和 Ubuntu 的 `ffmpeg`，但不会安装或下载 MFA
 
 - `run_rvc_aligned.py`：按核心区和上下文执行对齐分块转换。
 - `run_segmented_rvc.py`：按外部情绪段 JSON 执行分段转换并重建时间轴。
+- `rvc_runtime.py`：固定使用 SciPy polyphase 重采样、执行启动预检，并记录运行阶段耗时。
+- `rvc_v6b_compat.py`：在加载外部 RVC app 后，为 v6b 对齐 F0、HuBERT 和条件帧轴，不直接改写外部 app 文件。
 - `analyze_lyrics_emotion.py`：从字幕和人声提取可审计的情绪/声学参数。
 - `smooth_emotion_boundaries.py`：平滑连续情绪段边界。
 - `mix_vocal_plus_gain.py`：提升人声比例并生成防削波混音。

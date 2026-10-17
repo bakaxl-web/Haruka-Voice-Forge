@@ -1,4 +1,4 @@
-"""Vocal2Midi 外部适配器：保持旧流程 Python 环境与新模型环境隔离。"""
+"""Vocal2Midi 历史适配器：当前项目已停用，仅保留追溯代码。"""
 
 from __future__ import annotations
 
@@ -16,6 +16,8 @@ from .io import file_metadata, load_json, write_json
 
 DEFAULT_VOCAL2MIDI_ROOT = Path(r"D:\Vocal2Midi-Local")
 DEFAULT_VOCAL2MIDI_PYTHON = DEFAULT_VOCAL2MIDI_ROOT / ".venv" / "Scripts" / "python.exe"
+# 项目策略是永久停用该外部前端；历史函数保留用于读取旧记录，但禁止启动进程。
+VOCAL2MIDI_DISABLED = True
 MISSING_LYRIC_MARKERS = frozenset({"", "-", "_", "sil", "sp", "pau", "<blank>", "<unk>"})
 
 
@@ -39,12 +41,8 @@ def merge_vocal2midi_config(
 
 
 def should_run_vocal2midi(job: Mapping[str, Any], config: Mapping[str, Any]) -> bool:
-    """只在显式启用且 guide 任务同时缺少谱面和歌词时触发自动前端。"""
-    if not bool(config.get("enabled", False)):
-        return False
-    if str(job.get("mode", "")).strip().lower() != "guide":
-        return False
-    return not _is_set(job.get("score")) and not _is_set(job.get("lyrics"))
+    """项目级硬停用：历史任务配置不能重新启用自动前端。"""
+    return False
 
 
 def _is_set(value: Any) -> bool:
@@ -297,7 +295,10 @@ def run_vocal2midi(
     *,
     runner_path: Path | None = None,
 ) -> dict[str, Any]:
-    """调用独立 Vocal2Midi 环境并生成旧流程所需的自动歌词候选。"""
+    """拒绝启动已停用的外部前端；下方代码仅保留历史实现供追溯。"""
+    if VOCAL2MIDI_DISABLED:
+        raise Vocal2MidiIntegrationError("Vocal2Midi 已在 Haruka-Voice-Forge 项目中停用")
+
     integration_dir = run_dir / "integrations" / "vocal2midi"
     raw_dir = integration_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)

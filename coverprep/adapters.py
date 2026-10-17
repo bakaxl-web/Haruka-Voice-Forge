@@ -53,14 +53,11 @@ def doctor_report(
     game = config.get("game", {}) if isinstance(config, dict) else {}
     g2p = config.get("g2p", {}) if isinstance(config, dict) else {}
     diffsinger = config.get("diffsinger", {}) if isinstance(config, dict) else {}
-    vocal2midi = config.get("vocal2midi", {}) if isinstance(config, dict) else {}
     game_root = Path(str(game.get("root", configured_root / "GAME")))
     game_python = Path(str(game.get("python", game_root / ".venv" / "Scripts" / "python.exe")))
     g2p_python = g2p.get("python")
     g2p_cwd = Path(str(g2p.get("cwd", ""))) if g2p.get("cwd") else None
     diffsinger_root = Path(str(diffsinger.get("root", configured_root / "DiffSinger")))
-    vocal2midi_root = Path(str(vocal2midi.get("root", ""))) if vocal2midi.get("root") else None
-    vocal2midi_python = vocal2midi.get("python")
     tools = {
         "ffmpeg": shutil.which("ffmpeg") is not None,
         "game_repo": game_root.is_dir(),
@@ -69,8 +66,6 @@ def doctor_report(
         "diffsinger": diffsinger_root.is_dir(),
         "g2p_python": _path_exists(g2p_python),
         "g2p_cwd": bool(g2p_cwd and g2p_cwd.is_dir()),
-        "vocal2midi_root": bool(vocal2midi_root and vocal2midi_root.is_dir()),
-        "vocal2midi_python": _path_exists(vocal2midi_python),
         "mfa_miniforge": bool(mfa.get("conda_prefix")) and Path(str(mfa.get("conda_prefix"))).is_dir(),
         "mfa_executable": _path_exists(mfa.get("executable")),
         "mfa_acoustic_model": _path_exists(mfa.get("acoustic_model")),
@@ -95,7 +90,7 @@ def doctor_report(
         "ffmpeg", "game_repo", "game_python", "diffsinger", "mfa_miniforge", "mfa_executable",
         "mfa_acoustic_model", "mfa_dictionary", "mfa_g2p_model", "mfa_root_writable", "mfa_temp_writable",
         "cache_writable", "temp_writable", "mfa_phoneme_compatible",
-        "g2p_python", "g2p_cwd", "vocal2midi_root", "vocal2midi_python",
+        "g2p_python", "g2p_cwd",
     }
     return {
         "modules": modules,
