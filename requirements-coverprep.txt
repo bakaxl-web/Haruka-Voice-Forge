@@ -4,4 +4,5 @@ PyYAML>=6,<7
 soundfile>=0.12,<1
 mido>=1.3,<2
 librosa>=0.10,<1
+scipy>=1.11,<2
 praat-parselmouth>=0.4.7,<1

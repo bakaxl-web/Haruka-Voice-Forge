@@ -93,6 +93,19 @@ def build_parser() -> argparse.ArgumentParser:
         child = review_sub.add_parser(name)
         _add_common_job_args(child)
 
+    post_rvc_parser = sub.add_parser("post-rvc", help="分析和修复 RVC 纯人声的音高")
+    post_rvc_sub = post_rvc_parser.add_subparsers(dest="post_rvc_command", required=True)
+    post_rvc_analyze = post_rvc_sub.add_parser("analyze", help="只读分析 RVC 输出与 MIDI 音符的音高偏差")
+    post_rvc_analyze.add_argument("--input", type=Path, required=True)
+    post_rvc_analyze.add_argument("--notes", type=Path, required=True)
+    post_rvc_analyze.add_argument("--output-dir", type=Path, required=True)
+    post_rvc_repair = post_rvc_sub.add_parser("repair", help="按分析报告生成独立的自动修音候选")
+    post_rvc_repair.add_argument("--input", type=Path, required=True)
+    post_rvc_repair.add_argument("--notes", type=Path, required=True)
+    post_rvc_repair.add_argument("--analysis", type=Path, required=True)
+    post_rvc_repair.add_argument("--output-dir", type=Path, required=True)
+    post_rvc_repair.add_argument("--decisions", type=Path)
+
     for name in ("qa", "package"):
         child = sub.add_parser(name, help=f"执行 {name} 阶段")
         _add_common_job_args(child)
@@ -322,6 +335,32 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "doctor":
             return _print_doctor(args)
+        if args.command == "post-rvc":
+            from .post_rvc import analyze_file, repair_file
+
+            if args.post_rvc_command == "analyze":
+                report = analyze_file(args.input, args.notes, args.output_dir)
+                summary = report.get("summary", {})
+                print(
+                    f"RVC 后修音分析：{report['status']}；"
+                    f"自动候选={summary.get('auto_repair_count', 0)}；"
+                    f"复核={summary.get('review_count', 0)}；"
+                    f"阻塞={summary.get('blocked_count', 0)}"
+                )
+                return 0 if report["status"] == "ANALYSIS_READY" else 1
+            report = repair_file(
+                args.input,
+                args.notes,
+                args.analysis,
+                args.output_dir,
+                decisions_path=args.decisions,
+            )
+            print(
+                f"RVC 后修音候选：{report['status']}；"
+                f"已应用={report.get('summary', {}).get('applied_count', 0)}；"
+                f"QA 问题={report.get('summary', {}).get('qa_issue_count', 0)}"
+            )
+            return 0 if report["status"] == "REPAIR_READY" else 1
         if args.command == "dataset":
             if args.dataset_command == "init":
                 report = initialize_dataset(
