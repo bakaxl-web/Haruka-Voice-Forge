@@ -1,0 +1,74 @@
+[
+  {
+    "name": "opening_phrase",
+    "start": 3.95,
+    "end": 14.07,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  },
+  {
+    "name": "first_main",
+    "start": 14.39,
+    "end": 101.37,
+    "index_rate": 0.52,
+    "rms_mix_rate": 0.27,
+    "protect": 0.36
+  },
+  {
+    "name": "middle_phrase",
+    "start": 103.61,
+    "end": 108.56,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  },
+  {
+    "name": "second_main",
+    "start": 114.77,
+    "end": 198.54,
+    "index_rate": 0.52,
+    "rms_mix_rate": 0.27,
+    "protect": 0.36
+  },
+  {
+    "name": "final_entry",
+    "start": 211.26,
+    "end": 223.09,
+    "index_rate": 0.52,
+    "rms_mix_rate": 0.27,
+    "protect": 0.36
+  },
+  {
+    "name": "final_lift_01",
+    "start": 223.89,
+    "end": 236.38,
+    "index_rate": 0.55,
+    "rms_mix_rate": 0.29,
+    "protect": 0.38
+  },
+  {
+    "name": "final_lift_02",
+    "start": 236.75,
+    "end": 239.60,
+    "index_rate": 0.55,
+    "rms_mix_rate": 0.29,
+    "protect": 0.38
+  },
+  {
+    "name": "final_peak",
+    "start": 240.32,
+    "end": 297.28,
+    "index_rate": 0.55,
+    "rms_mix_rate": 0.29,
+    "protect": 0.38
+  },
+  {
+    "name": "outro_phrase",
+    "start": 298.77,
+    "end": 304.36,
+    "index_rate": 0.48,
+    "rms_mix_rate": 0.22,
+    "protect": 0.34
+  }
+]

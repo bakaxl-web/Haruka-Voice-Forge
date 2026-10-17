@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "review_stage": "POST_RETRY_AUDIO",
+  "decisions": [
+    {
+      "sample_id": "v15-v14-song-021-0004__sentence-group-0001",
+      "choice": "PARTIAL",
+      "comment": "重建后复听仍确认结尾多切；已达到一次重试上限，固定隔离。",
+      "review_source_sha256": "7236805e10328a1a0ca97fcf50262e5e6bbfbfbe1fb47c8e005d6ef2db5f2b32"
+    }
+  ]
+}

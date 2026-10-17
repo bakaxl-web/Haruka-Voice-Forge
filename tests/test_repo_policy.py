@@ -50,6 +50,14 @@ class RepositoryPolicyTests(unittest.TestCase):
 
         self.assertEqual(scan_paths(self.root), [])
 
+    def test_ignores_generated_directory_names_case_insensitively(self):
+        (self.root / "OUTPUT" / "job").mkdir(parents=True)
+        (self.root / "OUTPUT" / "job" / "audio.wav").write_bytes(b"audio")
+        (self.root / "TEMP" / "ja").mkdir(parents=True)
+        (self.root / "TEMP" / "ja" / "model.pth").write_bytes(b"model")
+
+        self.assertEqual(scan_paths(self.root), [])
+
     def test_reports_secret_inside_ignored_generated_output(self):
         secret = self.root / "outputs" / "job" / ".env"
         secret.parent.mkdir(parents=True)
@@ -58,6 +66,13 @@ class RepositoryPolicyTests(unittest.TestCase):
         violations = scan_paths(self.root)
 
         self.assertEqual(violations, [{"path": "outputs/job/.env", "reason": "secret-file"}])
+
+    def test_allows_full_conversation_archives_over_source_file_limit(self):
+        archive = self.root / "conversations" / "archive" / "thread.md"
+        archive.parent.mkdir(parents=True)
+        archive.write_text("conversation\n" * 32, encoding="utf-8")
+
+        self.assertEqual(scan_paths(self.root, max_bytes=1), [])
 
 
 if __name__ == "__main__":

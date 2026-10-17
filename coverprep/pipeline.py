@@ -257,10 +257,14 @@ def stage_score(run: JobRun) -> bool:
 def stage_lyrics(run: JobRun) -> bool:
     job = run.load_job()
     raw = str(job.get("lyrics", ""))
-    if not raw or not Path(raw).is_file():
+    if raw:
+        source = Path(raw)
+        if not source.is_file():
+            run.add_issue({"type": "LYRICS_MISSING", "message": "歌词 TSV 输入不存在"})
+            return True
+    else:
         run.add_issue({"type": "LYRICS_MISSING", "message": "没有歌词 TSV 输入"})
         return True
-    source = Path(raw)
     g2p = job.get("g2p", {}) or {}
     g2p_command = str(g2p.get("command", "")) if isinstance(g2p, dict) else ""
     g2p_source = source
@@ -340,7 +344,9 @@ def stage_lyrics(run: JobRun) -> bool:
         language,
         dictionary_layers=dictionary_layers,
     )
-    shutil.copy2(source, run.run_dir / "lyrics" / source.name)
+    destination = run.run_dir / "lyrics" / source.name
+    if source.resolve() != destination.resolve():
+        shutil.copy2(source, destination)
     write_json(run.run_dir / "lyrics" / "occurrences.json", result.occurrences)
     write_json(run.run_dir / "lyrics" / "pronunciation_locks.json", [item.get("pronunciation_lock", {}) for item in result.occurrences])
     write_json(run.run_dir / "lyrics" / "lyrics_rows.json", result.rows)
@@ -457,6 +463,7 @@ def _build_ds_from_midi(run: JobRun) -> list[dict[str, Any]]:
         )
     if cursor < len(notes):
         run.add_issue({"type": "UNASSIGNED_MIDI_NOTES", "message": "仍有 MIDI 音符没有歌词分配"})
+    write_json(run.run_dir / "alignment" / "input.ds", result)
     return result
 
 

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "review_stage": "POST_RETRY_AUDIO",
+  "decisions": [
+    {
+      "sample_id": "v15-v14-song-022-0006__sentence-group-0001",
+      "choice": "ACCEPTED",
+      "comment": "重建后复听对应。",
+      "review_source_sha256": "ddbcac1986a3d693b9d07fe759cb5371a055f03abe5bf3b04ed3898d17ffcd47"
+    }
+  ]
+}

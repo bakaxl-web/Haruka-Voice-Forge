@@ -1,0 +1,98 @@
+[
+  {
+    "name": "opening_verse",
+    "start": 30.88,
+    "end": 49.50,
+    "index_rate": 0.54,
+    "rms_mix_rate": 0.28,
+    "protect": 0.22
+  },
+  {
+    "name": "first_build",
+    "start": 49.50,
+    "end": 60.00,
+    "index_rate": 0.58,
+    "rms_mix_rate": 0.32,
+    "protect": 0.24
+  },
+  {
+    "name": "first_release",
+    "start": 60.00,
+    "end": 102.40,
+    "index_rate": 0.60,
+    "rms_mix_rate": 0.35,
+    "protect": 0.25
+  },
+  {
+    "name": "second_verse",
+    "start": 124.48,
+    "end": 139.80,
+    "index_rate": 0.54,
+    "rms_mix_rate": 0.28,
+    "protect": 0.22
+  },
+  {
+    "name": "second_build",
+    "start": 139.80,
+    "end": 150.00,
+    "index_rate": 0.58,
+    "rms_mix_rate": 0.32,
+    "protect": 0.24
+  },
+  {
+    "name": "second_peak_and_release",
+    "start": 150.00,
+    "end": 196.10,
+    "index_rate": 0.62,
+    "rms_mix_rate": 0.35,
+    "protect": 0.27
+  },
+  {
+    "name": "final_return",
+    "start": 214.62,
+    "end": 230.00,
+    "index_rate": 0.54,
+    "rms_mix_rate": 0.28,
+    "protect": 0.22
+  },
+  {
+    "name": "final_build",
+    "start": 230.00,
+    "end": 240.00,
+    "index_rate": 0.58,
+    "rms_mix_rate": 0.32,
+    "protect": 0.24
+  },
+  {
+    "name": "final_lift",
+    "start": 240.00,
+    "end": 250.00,
+    "index_rate": 0.60,
+    "rms_mix_rate": 0.34,
+    "protect": 0.25
+  },
+  {
+    "name": "final_peak",
+    "start": 250.00,
+    "end": 280.00,
+    "index_rate": 0.62,
+    "rms_mix_rate": 0.35,
+    "protect": 0.27
+  },
+  {
+    "name": "final_release",
+    "start": 280.00,
+    "end": 290.52,
+    "index_rate": 0.56,
+    "rms_mix_rate": 0.29,
+    "protect": 0.23
+  },
+  {
+    "name": "coda",
+    "start": 290.52,
+    "end": 300.01,
+    "index_rate": 0.54,
+    "rms_mix_rate": 0.28,
+    "protect": 0.22
+  }
+]

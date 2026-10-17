@@ -36,6 +36,7 @@ datasets/
 runs/
 logs/
 cache/
+output/
 outputs/
 artifacts/
 model-registry/

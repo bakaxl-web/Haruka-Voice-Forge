@@ -1,0 +1,46 @@
+{
+  "schema_version": "haruka-model-manifest-v1",
+  "model_version": "model-rvc-singing-v6b-e500-2026.09.19",
+  "run_id": "haruka_singing_v14_lite_v6b_condition_b16_cache_e500_20260919",
+  "model_family": "rvc-singing",
+  "code_commit": "legacy-imported",
+  "dataset_version": "haruka-singing-v14-lite-r1-v6b-condition-20260919",
+  "config_sha256": "2a1dc16c5f0cc5fbedecb2680592a0c25f82410e7a396136460fff753d425c3a",
+  "epoch": 500,
+  "step": 15000,
+  "seed": 20260919,
+  "torch": "2.7.1+cu118",
+  "cuda": "11.8",
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "status": "candidate",
+  "inference": {
+    "f0_method": "rmvpe",
+    "pitch": 0,
+    "index_rate": 0.1,
+    "rms_mix_rate": 1.0,
+    "protect": 0.33,
+    "core_seconds": 7.0,
+    "context_seconds": 0.5,
+    "chunk_crossfade_ms": 100.0,
+    "acceptance": "remote_technical_pass_subjective_pending",
+    "acceptance_evidence": "external-evaluation/haruka_singing_v14_lite_v6b_hakusen_e500_20260919/hakusen_v6b_e500_index0.1_cover_44k_stereo.report.json"
+  },
+  "files": [
+    {
+      "role": "inference_weight",
+      "name": "haruka_singing_v14_lite_v6b_condition_b16_cache_e500_20260919_e500_s15000.pth",
+      "release_name": "haruka-rvc-singing-v6b-e500.pth",
+      "source_relpath": "haruka_singing_v14_lite_v6b_condition_b16_cache_e500_20260919_e500_s15000.pth",
+      "bytes": 55815290,
+      "sha256": "1fc02a836c298e38057270bc3b17d2353721e241cfc3c1a54aba80978c035fd2"
+    },
+    {
+      "role": "index",
+      "name": "haruka_singing_v14_lite_v6b_condition_b16_cache_e500_20260919_added_IVF1345_Flat_nprobe_1_haruka_singing_v14_lite_v6b_condition_b16_cache_e500_20260919_v2.index",
+      "release_name": "haruka-rvc-singing-v6b-ivf1345.index",
+      "source_relpath": "haruka_singing_v14_lite_v6b_condition_b16_cache_e500_20260919_added_IVF1345_Flat_nprobe_1_haruka_singing_v14_lite_v6b_condition_b16_cache_e500_20260919_v2.index",
+      "bytes": 165790379,
+      "sha256": "00261627e9ce90b1426f3fd2e1ed77e210927a070f34efcb1f2620c3bfc8a46c"
+    }
+  ]
+}

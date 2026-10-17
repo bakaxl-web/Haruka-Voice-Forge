@@ -470,6 +470,30 @@ class TrainingDatasetTests(unittest.TestCase):
             self.assertEqual(report["songs"]["song-001"]["status"], "MISSING")
             self.assertEqual(report["issues"][0]["type"], "LYRICS_FILE_MISSING")
 
+    def test_lyrics_input_check_marks_header_only_template_pending(self):
+        from coverprep.training_dataset import check_lyrics_inputs
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            lyrics = root / "songs" / "song-010" / "lyrics"
+            lyrics.mkdir(parents=True)
+            (lyrics / "ocr_draft.tsv").write_text(
+                "phrase_id\tsurface\treading\tnote_count\tsource_image\treview_status\n",
+                encoding="utf-8",
+            )
+            sources = root / "reports" / "lyrics_sources.json"
+            sources.parent.mkdir(parents=True)
+            sources.write_text(
+                json.dumps({"songs": {"song-010": {"local_target": "songs/song-010/lyrics/ocr_draft.tsv"}}}),
+                encoding="utf-8",
+            )
+
+            report = check_lyrics_inputs(root, sources_path=sources, song_ids=["song-010"])
+
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertEqual(report["songs"]["song-010"]["status"], "BLOCKED")
+        self.assertEqual(report["issues"][0]["type"], "LYRICS_FILE_EMPTY")
+
     def test_cli_exposes_dataset_lyrics_command(self):
         from coverprep.cli import build_parser
 
@@ -493,6 +517,22 @@ class TrainingDatasetTests(unittest.TestCase):
 
         self.assertEqual(args.command, "dataset")
         self.assertEqual(args.dataset_command, "note-candidates")
+
+    def test_cli_note_candidates_accepts_manual_review_report(self):
+        from coverprep.cli import build_parser
+
+        args = build_parser().parse_args(
+            [
+                "dataset",
+                "note-candidates",
+                "--dataset",
+                "fixture",
+                "--manual-review-report",
+                "reports/manual.json",
+            ]
+        )
+
+        self.assertEqual(args.manual_review_report, Path("reports/manual.json"))
 
     def test_note_candidates_write_drafts_without_unlocking_blocked_g2p(self):
         from coverprep.training_dataset import generate_dataset_note_candidates
@@ -611,6 +651,109 @@ class TrainingDatasetTests(unittest.TestCase):
             self.assertEqual(song_report["verified_rest_boundaries"], [1])
             self.assertEqual(song_report["status"], "DRAFT_READY")
             self.assertNotIn("MIDI_GAP_AUDIO_CONFLICT", {issue["type"] for issue in song_report["issues"]})
+
+    def test_note_candidates_consumes_manual_gap_decision_only_for_matching_manifest(self):
+        from coverprep.training_dataset import generate_dataset_note_candidates
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            song_dir = root / "songs" / "song-001"
+            (song_dir / "lyrics").mkdir(parents=True)
+            (song_dir / "score").mkdir(parents=True)
+            (root / "reports").mkdir(parents=True)
+            source = root / "source.wav"
+            source.write_bytes(b"source")
+            (song_dir / "source.json").write_text(json.dumps({"source_path": str(source)}), encoding="utf-8")
+            (root / "reports" / "g2p_candidates.json").write_text(
+                json.dumps({"songs": {"song-001": {"status": "CANDIDATE_READY"}}}),
+                encoding="utf-8",
+            )
+            (song_dir / "lyrics" / "candidate_occurrences.json").write_text(
+                json.dumps([{"phrase_id": "p001", "surface": "あ", "phones": ["a", "i", "u", "e"]}]),
+                encoding="utf-8",
+            )
+            (song_dir / "score" / "auto_notes.json").write_text(
+                json.dumps(
+                    [
+                        {"note": "C4", "start": 0.0, "end": 0.4, "duration": 0.4},
+                        {"note": "D4", "start": 1.0, "end": 1.4, "duration": 0.4},
+                        {"note": "E4", "start": 1.4, "end": 1.8, "duration": 0.4},
+                        {"note": "F4", "start": 1.8, "end": 2.2, "duration": 0.4},
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (root / "reports" / "gap_listening_manifest_v4.json").write_text(
+                json.dumps({"source_report_sha256": "report-sha"}),
+                encoding="utf-8",
+            )
+            manual = root / "reports" / "manual_review_import_v1.json"
+            manual.write_text(
+                json.dumps(
+                    {
+                        "gap_source": {
+                            "manifest": "reports/gap_listening_manifest_v4.json",
+                            "manifest_source_report_sha256": "report-sha",
+                        },
+                        "gap_decisions": {
+                            "按休止处理": [],
+                            "按谱保留": [
+                                {"song_id": "song-001", "boundary_index": 1, "current_clip_id": "0001"}
+                            ],
+                        },
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            with patch(
+                "coverprep.note_mapping.find_large_midi_gaps",
+                return_value=[{"boundary_index": 1, "start_sec": 0.4, "end_sec": 1.0, "duration_sec": 0.6}],
+            ), patch(
+                "coverprep.note_mapping.analyze_audio_gap",
+                return_value={"boundary_index": 1, "status": "VOCAL_EVIDENCE"},
+            ):
+                report = generate_dataset_note_candidates(
+                    root,
+                    song_ids=["song-001"],
+                    manual_review_path=manual,
+                )
+
+            song_report = report["songs"]["song-001"]
+            self.assertEqual(song_report["status"], "DRAFT_READY")
+            self.assertEqual(song_report["manual_gap_decisions"]["按谱保留"], [1])
+            issue_types = {issue["type"] for issue in song_report["issues"]}
+            self.assertNotIn("INTRA_PHRASE_MIDI_GAP", issue_types)
+            self.assertNotIn("MIDI_GAP_AUDIO_CONFLICT", issue_types)
+
+    def test_manual_gap_decisions_reject_manifest_hash_mismatch(self):
+        from coverprep.training_dataset import TrainingDatasetError, load_manual_gap_decisions
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            reports = root / "reports"
+            reports.mkdir(parents=True)
+            (reports / "gap_listening_manifest_v4.json").write_text(
+                json.dumps({"source_report_sha256": "current-sha"}),
+                encoding="utf-8",
+            )
+            manual = reports / "manual.json"
+            manual.write_text(
+                json.dumps(
+                    {
+                        "gap_source": {
+                            "manifest": "gap_listening_manifest_v4.json",
+                            "manifest_source_report_sha256": "old-sha",
+                        },
+                        "gap_decisions": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(TrainingDatasetError):
+                load_manual_gap_decisions(root, manual)
 
     def test_g2p_candidates_read_ocr_draft_without_promoting_formal_lyrics(self):
         from coverprep.training_dataset import generate_dataset_g2p_candidates
@@ -742,6 +885,58 @@ class TrainingDatasetTests(unittest.TestCase):
             self.assertEqual(report["status"], "CROSSCHECK_READY")
             self.assertEqual(report["secondary_backend"], "mfa_japanese")
             self.assertEqual(report["pending_count"], 0)
+
+    def test_g2p_crosscheck_override_clears_unknown_from_raw_secondary_backend(self):
+        from coverprep.training_dataset import crosscheck_dataset_g2p
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "dataset"
+            lyrics_dir = root / "songs" / "song-001" / "lyrics"
+            lyrics_dir.mkdir(parents=True)
+            (lyrics_dir / "ocr_draft.tsv").write_text(
+                "phrase_id\tsurface\treading\tnote_count\tsource_image\treview_status\n"
+                "p001\tきゃ\t\t0\tshot.png\tOCR_DRAFT\n",
+                encoding="utf-8",
+            )
+            (lyrics_dir / "candidate_occurrences.json").write_text(
+                json.dumps(
+                    [{
+                        "phrase_id": "p001",
+                        "key": "きゃ",
+                        "surface": "きゃ",
+                        "reading": "",
+                        "phones": ["ç", "a"],
+                        "unknown": [],
+                        "latin_text": False,
+                    }],
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            (lyrics_dir / "reviewed_override.dict").write_text(
+                "きゃ\tç a\n",
+                encoding="utf-8",
+            )
+            profile = Path(tmp) / "profile.yaml"
+            profile.write_text("languages:\n  ja:\n    phonemes: [ç, a]\n", encoding="utf-8")
+            tools = Path(tmp) / "tools.yaml"
+            tools.write_text("g2p:\n  python: fake-python\n  cwd: .\n", encoding="utf-8")
+
+            with patch("coverprep.g2p.run_pyopenjtalk_batch", return_value=[["hy", "a"]]):
+                report = crosscheck_dataset_g2p(
+                    root,
+                    model_profile_path=profile,
+                    tool_config_path=tools,
+                    secondary_backend="pyopenjtalk",
+                    secondary_python=Path("fake-python"),
+                    secondary_cwd=Path("."),
+                    song_ids=["song-001"],
+                )
+
+            self.assertEqual(report["status"], "CROSSCHECK_READY")
+            rows = json.loads((lyrics_dir / "g2p_crosscheck.json").read_text(encoding="utf-8"))
+            self.assertEqual(rows[0]["status"], "auto_locked_override")
+            self.assertEqual(rows[0]["unknown"], [])
 
     def test_g2p_candidates_apply_song_local_reviewed_override(self):
         from coverprep.training_dataset import generate_dataset_g2p_candidates
@@ -889,6 +1084,253 @@ class TrainingDatasetTests(unittest.TestCase):
         self.assertEqual(args.source_dataset, "v1")
         self.assertEqual(args.target_dataset, "v2")
         self.assertEqual(args.policy, "majority")
+
+    def test_cli_exposes_expanded_dataset_commands_and_game_extract_options(self):
+        from coverprep.cli import build_parser
+
+        expand = build_parser().parse_args(
+            [
+                "dataset",
+                "expand-init",
+                "--base-dataset",
+                "v13",
+                "--dataset",
+                "v14.work",
+                "--reviewed-manifest",
+                "reviewed.jsonl",
+                "--source-registry",
+                "sources.json",
+                "--song-id",
+                "song-010",
+            ]
+        )
+        finalize = build_parser().parse_args(
+            [
+                "dataset",
+                "finalize-expanded",
+                "--source-dataset",
+                "v14.work",
+                "--base-dataset",
+                "v13",
+                "--target-dataset",
+                "v14",
+            ]
+        )
+        prepare = build_parser().parse_args(
+            [
+                "dataset",
+                "prepare",
+                "--dataset",
+                "v14.work",
+                "--game-root",
+                "game",
+                "--extract-game",
+                "--game-model",
+                "model.pt",
+            ]
+        )
+
+        self.assertEqual(expand.dataset_command, "expand-init")
+        self.assertEqual(expand.base_dataset, "v13")
+        self.assertEqual(expand.song_ids, ["song-010"])
+        self.assertEqual(finalize.dataset_command, "finalize-expanded")
+        self.assertEqual(finalize.base_dataset, "v13")
+        self.assertTrue(prepare.extract_game)
+        self.assertEqual(prepare.game_model, Path("model.pt"))
+
+    def test_initialize_expanded_dataset_copies_base_snapshot_and_writes_header_only_template(self):
+        from coverprep.training_dataset import initialize_expanded_dataset
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = root / "v13"
+            (base / "dataset" / "raw" / "wavs").mkdir(parents=True)
+            (base / "metadata").mkdir(parents=True)
+            (base / "reports").mkdir(parents=True)
+            (base / "dataset" / "raw" / "transcriptions.csv").write_text(
+                "name,ph_seq,ph_dur,ph_num,note_seq,note_dur\nbase__w001,a,1,1,C4,1\n",
+                encoding="utf-8",
+            )
+            (base / "metadata" / "manifest.jsonl").write_text(
+                json.dumps({"record_type": "training", "name": "base__w001"}) + "\n",
+                encoding="utf-8",
+            )
+            (base / "dataset" / "raw" / "wavs" / "base__w001.wav").write_bytes(b"base wav")
+            source = root / "source.wav"
+            with wave.open(str(source), "wb") as handle:
+                handle.setnchannels(2)
+                handle.setsampwidth(2)
+                handle.setframerate(44100)
+                handle.writeframes(b"\x00\x00\x00\x00" * 4410)
+            source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+            registry = root / "sources.json"
+            registry.write_text(
+                json.dumps(
+                    [
+                        {
+                            "song_id": "song-010",
+                            "title": "fixture",
+                            "source_path": str(source),
+                            "source_sha256": source_hash,
+                            "duration_sec": 0.1,
+                            "source_sample_rate": 44100,
+                            "source_channels": 2,
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            reviewed = root / "reviewed.jsonl"
+            reviewed.write_text(
+                json.dumps(
+                    {
+                        "song_id": "song-010",
+                        "clip_id": "song-010-0001",
+                        "start_sec": 0.0,
+                        "end_sec": 0.1,
+                        "status": "accepted",
+                        "singer_status": "confirmed_haruka",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            target = root / "v14.work"
+            report = initialize_expanded_dataset(
+                base,
+                target,
+                [registry],
+                reviewed,
+                song_ids=["song-010"],
+            )
+
+            self.assertEqual(report["status"], "EXPANSION_INITIALIZED")
+            self.assertTrue((target / "dataset" / "raw" / "wavs" / "base__w001.wav").is_file())
+            self.assertTrue((target / "metadata" / "base_v13_snapshot.json").is_file())
+            template = target / "songs" / "song-010" / "lyrics" / "ocr_draft.tsv"
+            self.assertEqual(
+                template.read_text(encoding="utf-8"),
+                "phrase_id\tsurface\treading\tnote_count\tsource_image\treview_status\n",
+            )
+            windows = json.loads((target / "songs" / "song-010" / "accepted_windows.json").read_text(encoding="utf-8"))
+            self.assertEqual(windows[0]["clip_id"], "song-010-0001")
+            self.assertEqual(windows[0]["svs_review_status"], "PENDING_USER_AUDIO_REVIEW")
+            self.assertEqual(report["selected_song_ids"], ["song-010"])
+
+    def test_normalize_supplemental_source_converts_to_stereo_44100_pcm16_without_changing_original(self):
+        from coverprep.training_dataset import normalize_supplemental_source
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source.wav"
+            with wave.open(str(source), "wb") as handle:
+                handle.setnchannels(1)
+                handle.setsampwidth(2)
+                handle.setframerate(48000)
+                handle.writeframes(b"\x00\x00" * 4800)
+            original_bytes = source.read_bytes()
+            destination = root / "canonical.wav"
+
+            result = normalize_supplemental_source(source, destination)
+
+            self.assertEqual(result["sample_rate"], 44100)
+            self.assertEqual(result["channels"], 2)
+            self.assertEqual(result["sample_width"], 2)
+            self.assertEqual(source.read_bytes(), original_bytes)
+            self.assertEqual(result["original_sha256"], hashlib.sha256(original_bytes).hexdigest())
+
+    def test_prepare_assets_can_extract_missing_game_score_with_explicit_model(self):
+        from coverprep.training_dataset import prepare_song_assets
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dataset = root / "dataset"
+            song_dir = dataset / "songs" / "song-010"
+            song_dir.mkdir(parents=True)
+            source = root / "source.wav"
+            with wave.open(str(source), "wb") as handle:
+                handle.setnchannels(2)
+                handle.setsampwidth(2)
+                handle.setframerate(44100)
+                handle.writeframes(b"\x00\x00\x00\x00" * 4410)
+            source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+            (song_dir / "source.json").write_text(
+                json.dumps(
+                    {
+                        "song_id": "song-010",
+                        "source_path": str(source),
+                        "source_sha256": source_hash,
+                        "duration_sec": 0.1,
+                        "sample_rate": 44100,
+                        "channels": 2,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (song_dir / "accepted_windows.json").write_text(
+                json.dumps([{"clip_id": "song-010-0001", "start_sec": 0.0, "end_sec": 0.1}]),
+                encoding="utf-8",
+            )
+            game_root = root / "game"
+            model = root / "GAME-model.pt"
+            game_root.mkdir()
+            model.write_bytes(b"model")
+
+            def fake_game_run(command, **kwargs):
+                (game_root / "song-010.mid").write_bytes(b"not-a-midi")
+                return type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+
+            with patch("coverprep.training_dataset.subprocess.run", side_effect=fake_game_run) as run:
+                report = prepare_song_assets(
+                    dataset,
+                    game_root,
+                    song_ids=["song-010"],
+                    extract_game=True,
+                    game_model=model,
+                    game_python=Path("game-python"),
+                    game_tool_root=root / "GAME",
+                )
+
+            self.assertEqual(report["status"], "BLOCKED")
+            run.assert_called_once()
+            command = run.call_args.args[0]
+            self.assertIn("extract", command)
+            self.assertIn(str(model), command)
+            self.assertTrue((song_dir / "score" / "game_extract_report.json").is_file())
+
+    def test_game_extract_rehomes_source_stem_outputs_to_song_id(self):
+        from coverprep.training_dataset import _run_game_extract
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source.wav"
+            model = root / "model.pt"
+            source.write_bytes(b"wav")
+            model.write_bytes(b"model")
+            game_root = root / "game"
+
+            def fake_game_run(command, **kwargs):
+                output_dir = Path(command[command.index("--output-dir") + 1])
+                output_dir.mkdir(parents=True, exist_ok=True)
+                (output_dir / "source.mid").write_bytes(b"midi")
+                (output_dir / "source.txt").write_text("C4\n", encoding="utf-8")
+                (output_dir / "source.csv").write_text("time,note\n", encoding="utf-8")
+                return type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+
+            with patch("coverprep.training_dataset.subprocess.run", side_effect=fake_game_run):
+                report = _run_game_extract(
+                    source,
+                    game_root,
+                    game_model=model,
+                    game_tool_root=root / "tool",
+                    output_stem="song-010",
+                )
+
+            self.assertEqual(report["status"], "PASSED")
+            self.assertTrue((game_root / "song-010.mid").is_file())
+            self.assertTrue((game_root / "song-010.txt").is_file())
+            self.assertTrue((game_root / "song-010.csv").is_file())
 
 
 if __name__ == "__main__":
